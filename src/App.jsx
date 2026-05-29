@@ -1,4 +1,15 @@
+import { useEffect } from "react";
+import { ref, onValue } from "firebase/database";
+import { db } from "./firebase";
 export default function SmartAPFCDashboard() {
+  useEffect(() => {
+  const dataRef = ref(db, "PFC");
+
+  onValue(dataRef, (snapshot) => {
+    const data = snapshot.val();
+    console.log(data);
+  });
+}, []);
   const data = {
     voltage: 220.4,
     current: 3.25,
