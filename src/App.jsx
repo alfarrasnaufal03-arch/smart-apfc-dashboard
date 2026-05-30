@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ref, onValue } from "firebase/database";
 import { db, app } from "./firebase";
 
@@ -17,7 +17,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
 } from "recharts";
 
 export default function App() {
@@ -125,7 +124,7 @@ export default function App() {
   const reactive = lcd.line3.match(/Q\s*:\s*([\d.]+VAR?)/)?.[1] || "0VAR";
 
   // =========================
-  // LOGIN PAGE (modern & akademis)
+  // LOGIN PAGE
   // =========================
   if (!user) {
     return (
@@ -135,7 +134,7 @@ export default function App() {
             APFC SYSTEM LOGIN
           </h1>
           <p className="text-center text-slate-300 text-sm mb-8">
-           AUTOMATIC POWER FACTOR CORRECTION
+            AUTOMATIC POWER FACTOR CORRECTION
           </p>
 
           <input
@@ -174,52 +173,53 @@ export default function App() {
   }
 
   // =========================
-  // MAIN DASHBOARD (modern & akademis)
+  // MAIN DASHBOARD - WATERMARK RAPI & TERATUR
   // =========================
   return (
-  <div className="min-h-screen bg-gradient-to-br from-slate-900 via-lime-950 to-cyan-900 relative overflow-hidden">
-    {/* ========== BACKGROUND WATERMARK (subtle pattern) ========== */}
-    <div className="absolute inset-0 pointer-events-none select-none z-0">
-      <div className="absolute inset-0 flex flex-wrap justify-center items-center opacity-10 md:opacity-5">
-        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">cos φ</div> 
-        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">APFC</div>  
-        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">λ</div> 
-        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">PFC</div> 
-        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">cos φ</div> 
-        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">APFC</div> 
-        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">λ</div> 
-        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">PFC</div>
-        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">cos φ</div> 
-        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">APFC</div>  
-        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">λ</div> 
-        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">PFC</div> 
-        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">cos φ</div> 
-        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">APFC</div> 
-        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">λ</div> 
-        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">PFC</div>
-        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">cos φ</div> 
-        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">APFC</div>  
-        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">λ</div> 
-        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">PFC</div> 
-        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">cos φ</div> 
-        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">APFC</div> 
-        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">λ</div> 
-        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">PFC</div> 
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-lime-950 to-cyan-900 relative overflow-x-auto">
+      {/* BACKGROUND WATERMARK - POLA GRID RAPI */}
+      <div className="absolute inset-0 pointer-events-none select-none z-0">
+        {/* Pola petir dengan grid yang rapi */}
+        <div className="absolute inset-0 grid grid-cols-4 md:grid-cols-8 lg:grid-cols-12 gap-4 p-8 opacity-5">
+          {Array.from({ length: 48 }).map((_, i) => (
+            <div key={i} className="flex justify-center items-center text-4xl md:text-6xl text-yellow-200">
+              ⚡
+            </div>
+          ))}
+        </div>
+
+        {/* Pola teks HIGH VOLTAGE / SUTTET dengan baris yang rapi */}
+        <div className="absolute inset-0 flex flex-col justify-center items-center gap-8 opacity-5">
+          <div className="flex flex-wrap justify-center gap-8 text-3xl md:text-5xl font-black text-white uppercase tracking-wider">
+            {['HIGH VOLTAGE', 'SUTTET', '150 kV', '500 kV', 'DANGER', 'BAHAYA'].map((text, idx) => (
+              <span key={idx}>{text}</span>
+            ))}
+          </div>
+          <div className="flex flex-wrap justify-center gap-8 text-3xl md:text-5xl font-black text-white uppercase tracking-wider">
+            {['⚡ POWER', '⚡ ENERGY', '⚡ SAFETY', '⚡ CONTROL'].map((text, idx) => (
+              <span key={idx}>{text}</span>
+            ))}
+          </div>
+        </div>
+
+        {/* Pola menara SUTTET di tepi bawah dengan baris rapi */}
+        <div className="absolute bottom-10 left-0 right-0 flex justify-center gap-6 opacity-10">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div key={i} className="text-5xl md:text-7xl text-gray-300">
+              🗼
+            </div>
+          ))}
+        </div>
+
+        {/* Garis gelombang halus di bagian paling bawah */}
+        <svg className="absolute bottom-0 left-0 w-full h-24 opacity-10" preserveAspectRatio="none" viewBox="0 0 1200 120">
+          <path d="M0,64L80,69C160,75,240,85,320,80C400,75,480,53,560,48C640,43,720,53,800,64C880,75,960,85,1040,80C1120,75,1200,53L1200,120L0,120Z" fill="#fbbf24" />
+        </svg>
       </div>
-      {/* gelombang listrik dekoratif */}
-      <svg className="absolute bottom-0 left-0 w-full h-32 opacity-5" preserveAspectRatio="none" viewBox="0 0 1200 120">
-        <path d="M0,64L80,69C160,75,240,85,320,80C400,75,480,53,560,48C640,43,720,53,800,64C880,75,960,85,1040,80C1120,75,1200,53,1200,53L1200,120L0,120Z" fill="white" />
-      </svg>
-    </div>
 
-    {/* ========== KONTEN UTAMA (dashboard) ========== */}
-    <div className="relative z-10 max-w-7xl mx-auto px-4 py-6 md:px-6 md:py-8">
-    </div>
-
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-lime-950 to-cyan-900">
-      <div className="max-w-7xl mx-auto px-4 py-6 md:px-6 md:py-8">
-
-        {/* HEADER dengan gradien dan garis bawah */}
+      {/* KONTEN UTAMA */}
+      <div className="relative z-10 max-w-7xl mx-auto px-4 py-6 md:px-6 md:py-8">
+        {/* HEADER */}
         <div className="text-center mb-10">
           <h1 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-yellow-400 via-red-500 to-orange-500 bg-clip-text text-transparent">
             APFC MONITORING SYSTEM FOR RESIDENTIAL LOADS
@@ -229,134 +229,102 @@ export default function App() {
           </p>
           <button
             onClick={logout}
-            className="mt-4 text-red-400 hover:text-red-300 text-sm bg-black/100 px-4 py-1 rounded-full transition"
+            className="mt-4 text-red-400 hover:text-red-300 text-sm bg-black/30 px-4 py-1 rounded-full transition"
           >
             LOGOUT ↺
           </button>
         </div>
 
-        {/* PARAMETER CARD GRID - glassmorphism modern */}
+        {/* PARAMETER CARDS */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
-          {/* Voltage */}
-          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-cyan-400 shadow-lg">
-            <p className="text-cyan-500 text-sm font-bold uppercase tracking-wider">VOLTAGE ( V )</p>
-            <h1 className="text-4xl font-mono mt-1 text-white">{voltage}</h1>
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-cyan-400">
+            <p className="text-cyan-500 text-sm font-bold uppercase">VOLTAGE (V)</p>
+            <h1 className="text-4xl font-mono mt-1 text-white break-words">{voltage}</h1>
           </div>
-
-          {/* Current */}
-          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-emerald-400 shadow-lg">
-            <p className="text-emerald-500 text-sm font-bold uppercase tracking-wider">CURRENT ( A )</p>
-            <h1 className="text-4xl font-mono mt-1 text-white">{current}</h1>
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-emerald-400">
+            <p className="text-emerald-500 text-sm font-bold uppercase">CURRENT (A)</p>
+            <h1 className="text-4xl font-mono mt-1 text-white break-words">{current}</h1>
           </div>
-
-          {/* Power Factor */}
-          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-violet-400 shadow-lg">
-            <p className="text-violet-500 text-sm font-bold uppercase tracking-wider">POWER FACTOR ( cos φ )</p>
-            <h1 className="text-4xl font-mono mt-1 text-white">{pf}</h1>
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-violet-400">
+            <p className="text-violet-500 text-sm font-bold uppercase">POWER FACTOR (cos φ)</p>
+            <h1 className="text-4xl font-mono mt-1 text-white break-words">{pf}</h1>
           </div>
-
-          {/* Active Power */}
-          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-orange-400 shadow-lg">
-            <p className="text-orange-500 text-sm font-bold uppercase tracking-wider">ACTIVE POWER ( W )</p>
-            <h1 className="text-4xl font-mono mt-1 text-white">{power}</h1>
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-orange-400">
+            <p className="text-orange-500 text-sm font-bold uppercase">ACTIVE POWER (W)</p>
+            <h1 className="text-4xl font-mono mt-1 text-white break-words">{power}</h1>
           </div>
-
-          {/* Apparent Power */}
-          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-sky-400 shadow-lg">
-            <p className="text-sky-500 text-sm font-bold uppercase tracking-wider">APPARENT POWER ( VA )</p>
-            <h1 className="text-4xl font-mono mt-1 text-white">{apparent}</h1>
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-sky-400">
+            <p className="text-sky-500 text-sm font-bold uppercase">APPARENT POWER (VA)</p>
+            <h1 className="text-4xl font-mono mt-1 text-white break-words">{apparent}</h1>
           </div>
-
-          {/* Reactive Power */}
-          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-pink-400 shadow-lg">
-            <p className="text-pink-500 text-sm font-bold uppercase tracking-wider"> REACTIVE POWER ( VAR )</p>
-            <h1 className="text-4xl font-mono mt-1 text-white">{reactive}</h1>
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-pink-400">
+            <p className="text-pink-500 text-sm font-bold uppercase">REACTIVE POWER (VAR)</p>
+            <h1 className="text-4xl font-mono mt-1 text-white break-words">{reactive}</h1>
           </div>
         </div>
 
-        {/* Kapasitor card full width */}
-        <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 mb-10 border-l-4 border-r-4 border-amber-500 shadow-lg">
-          <p className="text-amber-500 text-sm font-bold uppercase tracking-wider">CAP. BANK STATUS</p>
-          <h1 className="text-3xl font-mono mt-1 text-white">{lcd.line4}</h1>
+        {/* KAPASITOR */}
+        <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 mb-10 border-l-4 border-r-4 border-amber-500">
+          <p className="text-amber-500 text-sm font-bold uppercase">BANK CAPACITOR STATUS</p>
+          <h1 className="text-3xl font-mono mt-1 text-white break-words">{lcd.line4}</h1>
         </div>
 
-        {/* CHART SECTION - grid responsif 2 kolom untuk layar sedang ke atas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {/* Current Chart */}
-          <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 shadow-xl border-l-4 border-b-4 border-emerald-500">
-            <h2 className="text-emerald-500 font-bold mb-3 flex items-center gap-2">
-              <span className="w-2 h-2 bg-emerald-400 rounded-full"></span>
-              CURRENT (Ampere)
-            </h2>
+        {/* CHART 2 KOLOM */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-slate-900/50 rounded-2xl p-4 shadow-xl border-l-4 border-b-4 border-emerald-500">
+            <h2 className="text-emerald-500 font-bold mb-3">CURRENT (Ampere)</h2>
             <ResponsiveContainer width="100%" height={280}>
               <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                <XAxis dataKey="time" stroke="#ffff" tick={{ fontSize: 14 }} angle={-35} textAnchor="end" height={50} />
-                <YAxis stroke="#ffff" />
-                <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px", color: "#ffff" }} />
+                <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
+                <XAxis dataKey="time" stroke="#fff" tick={{ fontSize: 12 }} angle={-30} textAnchor="end" height={50} />
+                <YAxis stroke="#fff" />
+                <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px" }} labelStyle={{ color: "#fff" }} itemStyle={{ color: "#fff" }} />
                 <Line type="monotone" dataKey="current" stroke="#10b981" strokeWidth={3} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
-
-          {/* Power Factor Chart */}
-          <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 shadow-xl border-l-4 border-b-4 border-violet-500">
-            <h2 className="text-violet-500 font-bold mb-3 flex items-center gap-2">
-              <span className="w-2 h-2 bg-violet-400 rounded-full"></span>
-              POWER FACTOR (cos φ)
-            </h2>
+          <div className="bg-slate-900/50 rounded-2xl p-4 shadow-xl border-l-4 border-b-4 border-violet-500">
+            <h2 className="text-violet-500 font-bold mb-3">POWER FACTOR (cos φ)</h2>
             <ResponsiveContainer width="100%" height={280}>
               <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                <XAxis dataKey="time" stroke="#ffff" tick={{ fontSize: 14 }} angle={-35} textAnchor="end" height={50} />
-                <YAxis stroke="#ffff" domain={[0, 1]} />
-                <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px", color: "#ffff" }} />
+                <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
+                <XAxis dataKey="time" stroke="#fff" tick={{ fontSize: 12 }} angle={-30} textAnchor="end" height={50} />
+                <YAxis stroke="#fff" domain={[0, 1]} />
+                <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px" }} labelStyle={{ color: "#fff" }} itemStyle={{ color: "#fff" }} />
                 <Line type="monotone" dataKey="pf" stroke="#8b5cf6" strokeWidth={3} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
-
-          {/* Apparent Power Chart */}
-          <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 shadow-xl border-l-4 border-b-4 border-cyan-500">
-            <h2 className="text-cyan-500 font-bold mb-3 flex items-center gap-2">
-              <span className="w-2 h-2 bg-cyan-400 rounded-full"></span>
-              APPARENT POWER (VA)
-            </h2>
+          <div className="bg-slate-900/50 rounded-2xl p-4 shadow-xl border-l-4 border-b-4 border-cyan-500">
+            <h2 className="text-cyan-500 font-bold mb-3">APPARENT POWER (VA)</h2>
             <ResponsiveContainer width="100%" height={280}>
               <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                <XAxis dataKey="time" stroke="#ffff" tick={{ fontSize: 14 }} angle={-35} textAnchor="end" height={50} />
-                <YAxis stroke="#ffff" />
-                <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px", color: "#ffff" }} />
+                <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
+                <XAxis dataKey="time" stroke="#fff" tick={{ fontSize: 12 }} angle={-30} textAnchor="end" height={50} />
+                <YAxis stroke="#fff" />
+                <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px" }} labelStyle={{ color: "#fff" }} itemStyle={{ color: "#fff" }} />
                 <Line type="monotone" dataKey="apparent" stroke="#06b6d4" strokeWidth={3} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
-
-          {/* Reactive Power Chart */}
-          <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 shadow-xl border-l-4 border-b-4 border-pink-500">
-            <h2 className="text-pink-500 font-bold mb-3 flex items-center gap-2">
-              <span className="w-2 h-2 bg-pink-400 rounded-full"></span>
-              REACTIVE POWER (VAR)
-            </h2>
+          <div className="bg-slate-900/50 rounded-2xl p-4 shadow-xl border-l-4 border-b-4 border-pink-500">
+            <h2 className="text-pink-500 font-bold mb-3">REACTIVE POWER (VAR)</h2>
             <ResponsiveContainer width="100%" height={280}>
               <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                <XAxis dataKey="time" stroke="#ffff" tick={{ fontSize: 14 }} angle={-35} textAnchor="end" height={50} />
-                <YAxis stroke="#ffff" />
-                <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px", color: "#ffff" }}/>
+                <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
+                <XAxis dataKey="time" stroke="#fff" tick={{ fontSize: 12 }} angle={-30} textAnchor="end" height={50} />
+                <YAxis stroke="#fff" />
+                <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px" }} labelStyle={{ color: "#fff" }} itemStyle={{ color: "#fff" }} />
                 <Line type="monotone" dataKey="reactive" stroke="#ec4899" strokeWidth={3} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Footer akademis */}
         <footer className="mt-12 text-center text-slate-400 text-xs border-t border-white/10 pt-6">
-          <p>© 2026 — Sistem Pemantauan APFC Berbasis IoT</p>
+          <p>© 2026 — Sistem Pemantauan APFC Berbasis IoT | High Voltage Theme</p>
         </footer>
       </div>
     </div>
-  </div>
   );
 }
