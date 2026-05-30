@@ -23,32 +23,27 @@ import DeviceOfflinePage from "./components/DeviceOfflinePage";
 
 export default function App() {
   // ============ STATUS JARINGAN INTERNET ============
-  const isOnline = true; 
+  const isOnline = true; // bisa diganti dengan hook useNetworkStatus
 
   // ============ DETEKSI PERANGKAT OFFLINE ===========
   const DEVICE_TIMEOUT = 20000; // 20 detik
 
-  // Ambil timestamp terakhir dari localStorage (default 0 jika belum ada)
   const getStoredLastUpdate = () => {
     const stored = localStorage.getItem('apfc_lastUpdate');
     return stored ? parseInt(stored, 10) : 0;
   };
 
   const [lastUpdate, setLastUpdate] = useState(getStoredLastUpdate);
-
-  // Inisialisasi deviceOnline langsung berdasarkan selisih waktu saat ini
   const [deviceOnline, setDeviceOnline] = useState(() => {
     const last = getStoredLastUpdate();
     return (Date.now() - last) < DEVICE_TIMEOUT;
   });
 
-  // Fungsi untuk update lastUpdate + simpan ke localStorage
   const updateLastUpdate = (timestamp) => {
     localStorage.setItem('apfc_lastUpdate', timestamp.toString());
     setLastUpdate(timestamp);
   };
 
-  // Cek deviceOnline setiap 1 detik (agar perubahan real-time tanpa refresh)
   useEffect(() => {
     const timer = setInterval(() => {
       setDeviceOnline((Date.now() - lastUpdate) < DEVICE_TIMEOUT);
@@ -77,6 +72,11 @@ export default function App() {
   const [chartData, setChartData] = useState([]);
 
   // =========================
+  // BOTTOM NAVIGATION STATE
+  // =========================
+  const [activeTab, setActiveTab] = useState("parameters"); // "parameters", "charts", "info"
+
+  // =========================
   // AUTH LISTENER
   // =========================
   useEffect(() => {
@@ -89,43 +89,41 @@ export default function App() {
   // =========================
   // LOGIN
   // =========================
- const login = async () => {
-  try {
-    setLoginError("");
-    await signInWithEmailAndPassword(auth, email, password);
-  } catch (err) {
-    console.log("Login error:", err.code); // debug
-    if (err.code === "auth/network-request-failed") {
-      setLoginError("Tidak ada koneksi internet. Periksa jaringan Anda.");
-    } else if (
-      err.code === "auth/user-not-found" ||
-      err.code === "auth/wrong-password" ||
-      err.code === "auth/invalid-credential"
-    ) {
-      setLoginError("Email atau password salah.");
-    } else {
-      setLoginError("Gagal login: " + err.message);
+  const login = async () => {
+    try {
+      setLoginError("");
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      if (err.code === "auth/network-request-failed") {
+        setLoginError("Tidak ada koneksi internet. Periksa jaringan Anda.");
+      } else if (
+        err.code === "auth/user-not-found" ||
+        err.code === "auth/wrong-password" ||
+        err.code === "auth/invalid-credential"
+      ) {
+        setLoginError("Email atau password salah.");
+      } else {
+        setLoginError("Gagal login: " + err.message);
+      }
     }
-  }
-};
+  };
 
   // =========================
   // LOGOUT
   // =========================
   const logout = async () => {
-  await signOut(auth);
-};
+    await signOut(auth);
+  };
 
   // =========================
   // FIREBASE REALTIME DB
   // =========================
   useEffect(() => {
-   if (!user) return;
-  const dataRef = ref(db, "PFC");
-  const unsub = onValue(dataRef, (snapshot) => {
-    const val = snapshot.val();
-    console.log("Data dari Firebase:", val); // <-- DEBUG
-    if (!val) return;
+    if (!user) return;
+    const dataRef = ref(db, "PFC");
+    const unsub = onValue(dataRef, (snapshot) => {
+      const val = snapshot.val();
+      if (!val) return;
 
       setLcd({
         line1: val.line1 || "",
@@ -157,12 +155,11 @@ export default function App() {
         return newData.slice(-20);
       });
 
-    const deviceTimestamp = val.timestamp ? parseInt(val.timestamp) * 1000 : Date.now();
-    console.log("deviceTimestamp:", deviceTimestamp, "Date.now:", Date.now()); // DEBUG
-    updateLastUpdate(deviceTimestamp);
-  });
-  return () => unsub();
-}, [user]);
+      const deviceTimestamp = val.timestamp ? parseInt(val.timestamp) * 1000 : Date.now();
+      updateLastUpdate(deviceTimestamp);
+    });
+    return () => unsub();
+  }, [user]);
 
   // =========================
   // PARSING DISPLAY
@@ -177,12 +174,10 @@ export default function App() {
   // =========================
   // RENDER
   // =========================
-  // 1. Internet mati → halaman OfflinePage
   if (!isOnline) {
-    return <OfflinePage />;
+    return <OfflinePage />; // pastikan OfflinePage diimport
   }
 
-  // 2. Belum login → halaman login
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-800 via-indigo-950 to-violet-950">
@@ -224,15 +219,16 @@ export default function App() {
     );
   }
 
-  // 3. Perangkat IoT offline → halaman DeviceOfflinePage
   if (!deviceOnline) {
     return <DeviceOfflinePage />;
   }
 
-  // 4. Semua normal → dashboard
+  // =========================
+  // DASHBOARD DENGAN BOTTOM NAVIGATION
+  // =========================
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-lime-950 to-cyan-900 relative overflow-hidden">
-      {/* Watermark */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-lime-950 to-cyan-900 relative pb-20">
+      {/* Watermark (sama seperti asli) */}
       <div
         className="absolute inset-0 pointer-events-none select-none z-0 opacity-10 md:opacity-5"
         style={{
@@ -263,133 +259,179 @@ export default function App() {
           backgroundSize: 'auto',
         }}
       />
-      <svg className="absolute bottom-0 left-0 w-full h-32 opacity-5" preserveAspectRatio="none" viewBox="0 0 1200 120">
-        <path d="M0,64L80,69C160,75,240,85,320,80C400,75,480,53,560,48C640,43,720,53,800,64C880,75,960,85,1040,80C1120,75,1200,53,1200,53L1200,120L0,120Z" fill="white" />
-      </svg>
 
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-lime-950 to-cyan-900">
-        <div className="max-w-7xl mx-auto px-4 py-6 md:px-6 md:py-8">
-          {/* Header */}
-          <div className="text-center mb-10">
-            <h1 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-yellow-400 via-red-500 to-orange-500 bg-clip-text text-transparent">
-              APFC MONITORING SYSTEM FOR RESIDENTIAL LOADS
-            </h1>
-            <p className="text-red-200 text-sm md:text-base mt-2 border-b border-white/10 inline-block pb-1 px-4">
-              SISTEM PEMANTAUAN KOREKSI FAKTOR DAYA OTOMATIS PADA BEBAN RUMAH TANGGA
-            </p>
-            <button
-              onClick={logout}
-              className="mt-4 text-red-400 hover:text-red-300 text-sm bg-black/100 px-4 py-1 rounded-full transition"
-            >
-              LOGOUT ↺
-            </button>
-          </div>
+      <div className="relative z-10 max-w-7xl mx-auto px-4 py-6 md:px-6 md:py-8">
+        {/* Header */}
+        <div className="text-center mb-6">
+          <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-yellow-400 via-red-500 to-orange-500 bg-clip-text text-transparent">
+            APFC MONITORING SYSTEM
+          </h1>
+          <p className="text-red-200 text-xs md:text-sm mt-1">
+            SISTEM PEMANTAUAN KOREKSI FAKTOR DAYA OTOMATIS
+          </p>
+        </div>
 
-          {/* Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
-            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-cyan-400 shadow-lg">
-              <p className="text-cyan-500 text-sm font-bold uppercase tracking-wider">VOLTAGE ( V )</p>
-              <h1 className="text-4xl font-mono mt-1 text-white">{voltage}</h1>
+        {/* KONTEN BERDASARKAN TAB */}
+        <div className="mt-4">
+          {activeTab === "parameters" && (
+            <div>
+              {/* Grid 6 card parameter */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-6">
+                <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-cyan-400 shadow-lg">
+                  <p className="text-cyan-500 text-sm font-bold uppercase tracking-wider">VOLTAGE ( V )</p>
+                  <h1 className="text-4xl font-mono mt-1 text-white">{voltage}</h1>
+                </div>
+                <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-emerald-400 shadow-lg">
+                  <p className="text-emerald-500 text-sm font-bold uppercase tracking-wider">CURRENT ( A )</p>
+                  <h1 className="text-4xl font-mono mt-1 text-white">{current}</h1>
+                </div>
+                <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-violet-400 shadow-lg">
+                  <p className="text-violet-500 text-sm font-bold uppercase tracking-wider">POWER FACTOR ( cos φ )</p>
+                  <h1 className="text-4xl font-mono mt-1 text-white">{pf}</h1>
+                </div>
+                <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-orange-400 shadow-lg">
+                  <p className="text-orange-500 text-sm font-bold uppercase tracking-wider">ACTIVE POWER ( W )</p>
+                  <h1 className="text-4xl font-mono mt-1 text-white">{power}</h1>
+                </div>
+                <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-sky-400 shadow-lg">
+                  <p className="text-sky-500 text-sm font-bold uppercase tracking-wider">APPARENT POWER ( VA )</p>
+                  <h1 className="text-4xl font-mono mt-1 text-white">{apparent}</h1>
+                </div>
+                <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-pink-400 shadow-lg">
+                  <p className="text-pink-500 text-sm font-bold uppercase tracking-wider">REACTIVE POWER ( VAR )</p>
+                  <h1 className="text-4xl font-mono mt-1 text-white">{reactive}</h1>
+                </div>
+              </div>
+              {/* Capacitor Bank Status */}
+              <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-amber-500 shadow-lg">
+                <p className="text-amber-500 text-sm font-bold uppercase tracking-wider">CAP. BANK STATUS</p>
+                <h1 className="text-3xl font-mono mt-1 text-white">{lcd.line4}</h1>
+              </div>
             </div>
-            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-emerald-400 shadow-lg">
-              <p className="text-emerald-500 text-sm font-bold uppercase tracking-wider">CURRENT ( A )</p>
-              <h1 className="text-4xl font-mono mt-1 text-white">{current}</h1>
-            </div>
-            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-violet-400 shadow-lg">
-              <p className="text-violet-500 text-sm font-bold uppercase tracking-wider">POWER FACTOR ( cos φ )</p>
-              <h1 className="text-4xl font-mono mt-1 text-white">{pf}</h1>
-            </div>
-            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-orange-400 shadow-lg">
-              <p className="text-orange-500 text-sm font-bold uppercase tracking-wider">ACTIVE POWER ( W )</p>
-              <h1 className="text-4xl font-mono mt-1 text-white">{power}</h1>
-            </div>
-            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-sky-400 shadow-lg">
-              <p className="text-sky-500 text-sm font-bold uppercase tracking-wider">APPARENT POWER ( VA )</p>
-              <h1 className="text-4xl font-mono mt-1 text-white">{apparent}</h1>
-            </div>
-            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-pink-400 shadow-lg">
-              <p className="text-pink-500 text-sm font-bold uppercase tracking-wider"> REACTIVE POWER ( VAR )</p>
-              <h1 className="text-4xl font-mono mt-1 text-white">{reactive}</h1>
-            </div>
-          </div>
+          )}
 
-          {/* Cap bank */}
-          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 mb-10 border-l-4 border-r-4 border-amber-500 shadow-lg">
-            <p className="text-amber-500 text-sm font-bold uppercase tracking-wider">CAP. BANK STATUS</p>
-            <h1 className="text-3xl font-mono mt-1 text-white">{lcd.line4}</h1>
-          </div>
+          {activeTab === "charts" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Current Chart */}
+              <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 shadow-xl border-l-4 border-b-4 border-emerald-500">
+                <h2 className="text-emerald-500 font-bold mb-3 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-emerald-400 rounded-full"></span>
+                  CURRENT (Ampere)
+                </h2>
+                <ResponsiveContainer width="100%" height={280}>
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                    <XAxis dataKey="time" stroke="#fff" tick={{ fontSize: 12 }} angle={-35} textAnchor="end" height={50} />
+                    <YAxis stroke="#fff" />
+                    <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px", color: "#fff" }} />
+                    <Line type="monotone" dataKey="current" stroke="#10b981" strokeWidth={3} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+              {/* PF Chart */}
+              <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 shadow-xl border-l-4 border-b-4 border-violet-500">
+                <h2 className="text-violet-500 font-bold mb-3 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-violet-400 rounded-full"></span>
+                  POWER FACTOR (cos φ)
+                </h2>
+                <ResponsiveContainer width="100%" height={280}>
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                    <XAxis dataKey="time" stroke="#fff" tick={{ fontSize: 12 }} angle={-35} textAnchor="end" height={50} />
+                    <YAxis stroke="#fff" domain={[0, 1]} />
+                    <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px", color: "#fff" }} />
+                    <Line type="monotone" dataKey="pf" stroke="#8b5cf6" strokeWidth={3} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+              {/* Apparent Power Chart */}
+              <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 shadow-xl border-l-4 border-b-4 border-cyan-500">
+                <h2 className="text-cyan-500 font-bold mb-3 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-cyan-400 rounded-full"></span>
+                  APPARENT POWER (VA)
+                </h2>
+                <ResponsiveContainer width="100%" height={280}>
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                    <XAxis dataKey="time" stroke="#fff" tick={{ fontSize: 12 }} angle={-35} textAnchor="end" height={50} />
+                    <YAxis stroke="#fff" />
+                    <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px", color: "#fff" }} />
+                    <Line type="monotone" dataKey="apparent" stroke="#06b6d4" strokeWidth={3} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+              {/* Reactive Power Chart */}
+              <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 shadow-xl border-l-4 border-b-4 border-pink-500">
+                <h2 className="text-pink-500 font-bold mb-3 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-pink-400 rounded-full"></span>
+                  REACTIVE POWER (VAR)
+                </h2>
+                <ResponsiveContainer width="100%" height={280}>
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                    <XAxis dataKey="time" stroke="#fff" tick={{ fontSize: 12 }} angle={-35} textAnchor="end" height={50} />
+                    <YAxis stroke="#fff" />
+                    <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px", color: "#fff" }} />
+                    <Line type="monotone" dataKey="reactive" stroke="#ec4899" strokeWidth={3} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
 
-          {/* Charts */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {/* Current Chart */}
-            <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 shadow-xl border-l-4 border-b-4 border-emerald-500">
-              <h2 className="text-emerald-500 font-bold mb-3 flex items-center gap-2">
-                <span className="w-2 h-2 bg-emerald-400 rounded-full"></span>
-                CURRENT (Ampere)
-              </h2>
-              <ResponsiveContainer width="100%" height={280}>
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                  <XAxis dataKey="time" stroke="#ffff" tick={{ fontSize: 14 }} angle={-35} textAnchor="end" height={50} />
-                  <YAxis stroke="#ffff" />
-                  <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px", color: "#ffff" }} />
-                  <Line type="monotone" dataKey="current" stroke="#10b981" strokeWidth={3} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
+          {activeTab === "info" && (
+            <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/20 text-center">
+              <h2 className="text-2xl font-bold text-white mb-4">ℹ️ Info Sistem</h2>
+              <p className="text-slate-300">Status Perangkat: {deviceOnline ? "🟢 Online" : "🔴 Offline"}</p>
+              <p className="text-slate-300 mt-2">Data terakhir diperbarui: {new Date(lastUpdate).toLocaleString()}</p>
+              <button
+                onClick={logout}
+                className="mt-6 bg-red-600 hover:bg-red-700 px-6 py-2 rounded-full text-white font-semibold transition"
+              >
+                LOGOUT ↺
+              </button>
+              <p className="text-xs text-slate-400 mt-6">© 2026 — APFC MONITORING SYSTEM</p>
             </div>
-            {/* PF Chart */}
-            <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 shadow-xl border-l-4 border-b-4 border-violet-500">
-              <h2 className="text-violet-500 font-bold mb-3 flex items-center gap-2">
-                <span className="w-2 h-2 bg-violet-400 rounded-full"></span>
-                POWER FACTOR (cos φ)
-              </h2>
-              <ResponsiveContainer width="100%" height={280}>
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                  <XAxis dataKey="time" stroke="#ffff" tick={{ fontSize: 14 }} angle={-35} textAnchor="end" height={50} />
-                  <YAxis stroke="#ffff" domain={[0, 1]} />
-                  <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px", color: "#ffff" }} />
-                  <Line type="monotone" dataKey="pf" stroke="#8b5cf6" strokeWidth={3} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-            {/* Apparent Power Chart */}
-            <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 shadow-xl border-l-4 border-b-4 border-cyan-500">
-              <h2 className="text-cyan-500 font-bold mb-3 flex items-center gap-2">
-                <span className="w-2 h-2 bg-cyan-400 rounded-full"></span>
-                APPARENT POWER (VA)
-              </h2>
-              <ResponsiveContainer width="100%" height={280}>
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                  <XAxis dataKey="time" stroke="#ffff" tick={{ fontSize: 14 }} angle={-35} textAnchor="end" height={50} />
-                  <YAxis stroke="#ffff" />
-                  <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px", color: "#ffff" }} />
-                  <Line type="monotone" dataKey="apparent" stroke="#06b6d4" strokeWidth={3} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-            {/* Reactive Power Chart */}
-            <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 shadow-xl border-l-4 border-b-4 border-pink-500">
-              <h2 className="text-pink-500 font-bold mb-3 flex items-center gap-2">
-                <span className="w-2 h-2 bg-pink-400 rounded-full"></span>
-                REACTIVE POWER (VAR)
-              </h2>
-              <ResponsiveContainer width="100%" height={280}>
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                  <XAxis dataKey="time" stroke="#ffff" tick={{ fontSize: 14 }} angle={-35} textAnchor="end" height={50} />
-                  <YAxis stroke="#ffff" />
-                  <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px", color: "#ffff" }}/>
-                  <Line type="monotone" dataKey="reactive" stroke="#ec4899" strokeWidth={3} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+          )}
+        </div>
+      </div>
 
-          <footer className="mt-12 text-center text-slate-400 text-xs border-t border-white/10 pt-6">
-            <p>© 2026 — Sistem Pemantauan APFC Berbasis IoT</p>
-          </footer>
+      {/* BOTTOM NAVIGATION MENU */}
+      <div className="fixed bottom-0 left-0 right-0 bg-black/70 backdrop-blur-lg border-t border-white/20 shadow-lg z-20">
+        <div className="flex justify-around items-center max-w-md mx-auto py-2">
+          <button
+            onClick={() => setActiveTab("parameters")}
+            className={`flex flex-col items-center px-4 py-1 rounded-full transition ${
+              activeTab === "parameters" ? "text-cyan-400" : "text-slate-400"
+            }`}
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+            </svg>
+            <span className="text-xs mt-1">Parameters</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("charts")}
+            className={`flex flex-col items-center px-4 py-1 rounded-full transition ${
+              activeTab === "charts" ? "text-emerald-400" : "text-slate-400"
+            }`}
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+            </svg>
+            <span className="text-xs mt-1">Charts</span>
+          </button>
+          <button
+            onClick={() => setActiveTab("info")}
+            className={`flex flex-col items-center px-4 py-1 rounded-full transition ${
+              activeTab === "info" ? "text-amber-400" : "text-slate-400"
+            }`}
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12z" />
+            </svg>
+            <span className="text-xs mt-1">Info</span>
+          </button>
         </div>
       </div>
     </div>
