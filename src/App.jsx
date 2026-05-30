@@ -225,7 +225,7 @@ export default function App() {
             APFC MONITORING SYSTEM FOR RESIDENTIAL LOADS
           </h1>
           <p className="text-red-200 text-sm md:text-base mt-2 border-b border-white/10 inline-block pb-1 px-4">
-            SISTEM PEMMANTAUAN PERBAIKAN FAKTOR DAYA OTOMATIS BEBAN RUMAH TANGGA
+            SISTEM PEMANTAUAN PERBAIKAN FAKTOR DAYA OTOMATIS BEBAN RUMAH TANGGA
           </p>
           <button
             onClick={logout}
