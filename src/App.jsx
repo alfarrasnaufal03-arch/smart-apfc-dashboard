@@ -25,7 +25,7 @@ export default function App() {
   // ============ STATUS JARINGAN INTERNET ============
   const isOnline = true; 
 
-  // ============ DETEKSI PERANGKAT OFFLINE ============
+  // ============ DETEKSI PERANGKAT OFFLINE ===========
   const DEVICE_TIMEOUT = 20000; // 20 detik
 
   // Ambil timestamp terakhir dari localStorage (default 0 jika belum ada)
