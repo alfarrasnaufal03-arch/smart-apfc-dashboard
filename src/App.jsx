@@ -276,7 +276,7 @@ export default function App() {
 
         {/* Kapasitor card full width */}
         <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 mb-10 border-l-4 border-r-4 border-amber-500 shadow-lg">
-          <p className="text-amber-500 text-sm font-bold uppercase tracking-wider">BANK CAPACITOR STATUS </p>
+          <p className="text-amber-500 text-sm font-bold uppercase tracking-wider">CAP. BANK STATUS</p>
           <h1 className="text-3xl font-mono mt-1 text-white">{lcd.line4}</h1>
         </div>
 
