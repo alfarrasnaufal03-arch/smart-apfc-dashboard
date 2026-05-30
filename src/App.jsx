@@ -19,12 +19,11 @@ import {
 } from "recharts";
 
 import { useNetworkStatus } from "./hooks/useNetworkStatus";
-import OfflinePage from "./components/OfflinePage";
 import DeviceOfflinePage from "./components/DeviceOfflinePage";
 
 export default function App() {
   // ============ STATUS JARINGAN INTERNET ============
-  const isOnline = useNetworkStatus("/api/ping");
+  const isOnline = true; 
 
   // ============ DETEKSI PERANGKAT OFFLINE ============
   const DEVICE_TIMEOUT = 20000; // 20 detik
