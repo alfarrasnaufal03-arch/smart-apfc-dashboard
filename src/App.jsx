@@ -24,7 +24,7 @@ import DeviceOfflinePage from "./components/DeviceOfflinePage";
 
 export default function App() {
   // ============ STATUS JARINGAN INTERNET ============
-  const isOnline = true; // abaikan pengecekan internet browser
+  const isOnline = useNetworkStatus("/api/ping");
 
   // ============ DETEKSI PERANGKAT OFFLINE ============
   const DEVICE_TIMEOUT = 20000; // 20 detik
