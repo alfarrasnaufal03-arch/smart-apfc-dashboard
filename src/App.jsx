@@ -173,155 +173,155 @@ export default function App() {
   }
 
   // =========================
-  // MAIN DASHBOARD - WATERMARK RAPI & TERATUR
+  // MAIN DASHBOARD - WATERMARK RESPONSIF
   // =========================
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-lime-950 to-cyan-900 relative overflow-x-auto">
-      {/* BACKGROUND WATERMARK - POLA GRID RAPI */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-lime-950 to-cyan-900 relative overflow-x-hidden">
+      {/* BACKGROUND WATERMARK - RESPONSIF & RAPI */}
       <div className="absolute inset-0 pointer-events-none select-none z-0">
-        {/* Pola petir dengan grid yang rapi */}
-        <div className="absolute inset-0 grid grid-cols-4 md:grid-cols-8 lg:grid-cols-12 gap-4 p-8 opacity-5">
-          {Array.from({ length: 48 }).map((_, i) => (
-            <div key={i} className="flex justify-center items-center text-4xl md:text-6xl text-yellow-200">
+        {/* Pola petir - jumlah kolom menyesuaikan layar */}
+        <div className="absolute inset-0 grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2 sm:gap-4 p-4 opacity-5">
+          {Array.from({ length: 40 }).map((_, i) => (
+            <div key={i} className="flex justify-center items-center text-2xl sm:text-4xl md:text-5xl text-yellow-200">
               ⚡
             </div>
           ))}
         </div>
 
-        {/* Pola teks HIGH VOLTAGE / SUTTET dengan baris yang rapi */}
-        <div className="absolute inset-0 flex flex-col justify-center items-center gap-8 opacity-5">
-          <div className="flex flex-wrap justify-center gap-8 text-3xl md:text-5xl font-black text-white uppercase tracking-wider">
+        {/* Teks High Voltage - hanya tampil di layar sedang ke atas */}
+        <div className="hidden md:flex flex-col justify-center items-center h-full opacity-5">
+          <div className="flex flex-wrap justify-center gap-4 lg:gap-8 text-2xl lg:text-4xl font-black text-white uppercase tracking-wider">
             {['HIGH VOLTAGE', 'SUTTET', '150 kV', '500 kV', 'DANGER', 'BAHAYA'].map((text, idx) => (
               <span key={idx}>{text}</span>
             ))}
           </div>
-          <div className="flex flex-wrap justify-center gap-8 text-3xl md:text-5xl font-black text-white uppercase tracking-wider">
-            {['⚡ POWER', '⚡ ENERGY', '⚡ SAFETY', '⚡ CONTROL'].map((text, idx) => (
+          <div className="flex flex-wrap justify-center gap-4 lg:gap-8 text-2xl lg:text-4xl font-black text-white uppercase tracking-wider mt-4">
+            {['⚡ POWER', '⚡ ENERGY', '⚡ CONTROL'].map((text, idx) => (
               <span key={idx}>{text}</span>
             ))}
           </div>
         </div>
 
-        {/* Pola menara SUTTET di tepi bawah dengan baris rapi */}
-        <div className="absolute bottom-10 left-0 right-0 flex justify-center gap-6 opacity-10">
-          {Array.from({ length: 10 }).map((_, i) => (
-            <div key={i} className="text-5xl md:text-7xl text-gray-300">
+        {/* Menara SUTTET - hanya di desktop, lebih kecil di tablet */}
+        <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2 sm:gap-4 opacity-10">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="text-3xl sm:text-5xl md:text-6xl text-gray-300">
               🗼
             </div>
           ))}
         </div>
 
-        {/* Garis gelombang halus di bagian paling bawah */}
-        <svg className="absolute bottom-0 left-0 w-full h-24 opacity-10" preserveAspectRatio="none" viewBox="0 0 1200 120">
+        {/* Gelombang halus di bawah */}
+        <svg className="absolute bottom-0 left-0 w-full h-16 sm:h-24 opacity-10" preserveAspectRatio="none" viewBox="0 0 1200 120">
           <path d="M0,64L80,69C160,75,240,85,320,80C400,75,480,53,560,48C640,43,720,53,800,64C880,75,960,85,1040,80C1120,75,1200,53L1200,120L0,120Z" fill="#fbbf24" />
         </svg>
       </div>
 
       {/* KONTEN UTAMA */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 py-6 md:px-6 md:py-8">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 py-4 sm:py-6 md:px-6 md:py-8">
         {/* HEADER */}
-        <div className="text-center mb-10">
-          <h1 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-yellow-400 via-red-500 to-orange-500 bg-clip-text text-transparent">
+        <div className="text-center mb-6 sm:mb-10">
+          <h1 className="text-xl sm:text-3xl md:text-5xl font-bold bg-gradient-to-r from-yellow-400 via-red-500 to-orange-500 bg-clip-text text-transparent">
             APFC MONITORING SYSTEM FOR RESIDENTIAL LOADS
           </h1>
-          <p className="text-red-200 text-sm md:text-base mt-2 border-b border-white/10 inline-block pb-1 px-4">
+          <p className="text-red-200 text-xs sm:text-sm md:text-base mt-2 border-b border-white/10 inline-block pb-1 px-2 sm:px-4">
             SISTEM PEMANTAUAN PERBAIKAN FAKTOR DAYA OTOMATIS BEBAN RUMAH TANGGA
           </p>
           <button
             onClick={logout}
-            className="mt-4 text-red-400 hover:text-red-300 text-sm bg-black/30 px-4 py-1 rounded-full transition"
+            className="mt-3 sm:mt-4 text-red-400 hover:text-red-300 text-xs sm:text-sm bg-black/30 px-3 py-1 rounded-full transition"
           >
             LOGOUT ↺
           </button>
         </div>
 
-        {/* PARAMETER CARDS */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
-          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-cyan-400">
-            <p className="text-cyan-500 text-sm font-bold uppercase">VOLTAGE (V)</p>
-            <h1 className="text-4xl font-mono mt-1 text-white break-words">{voltage}</h1>
+        {/* PARAMETER CARDS - responsif */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 mb-6 sm:mb-8">
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-3 sm:p-5 border-l-4 border-r-4 border-cyan-400">
+            <p className="text-cyan-500 text-xs sm:text-sm font-bold uppercase">VOLTAGE (V)</p>
+            <h1 className="text-2xl sm:text-4xl font-mono mt-1 text-white break-words">{voltage}</h1>
           </div>
-          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-emerald-400">
-            <p className="text-emerald-500 text-sm font-bold uppercase">CURRENT (A)</p>
-            <h1 className="text-4xl font-mono mt-1 text-white break-words">{current}</h1>
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-3 sm:p-5 border-l-4 border-r-4 border-emerald-400">
+            <p className="text-emerald-500 text-xs sm:text-sm font-bold uppercase">CURRENT (A)</p>
+            <h1 className="text-2xl sm:text-4xl font-mono mt-1 text-white break-words">{current}</h1>
           </div>
-          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-violet-400">
-            <p className="text-violet-500 text-sm font-bold uppercase">POWER FACTOR (cos φ)</p>
-            <h1 className="text-4xl font-mono mt-1 text-white break-words">{pf}</h1>
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-3 sm:p-5 border-l-4 border-r-4 border-violet-400">
+            <p className="text-violet-500 text-xs sm:text-sm font-bold uppercase">POWER FACTOR (cos φ)</p>
+            <h1 className="text-2xl sm:text-4xl font-mono mt-1 text-white break-words">{pf}</h1>
           </div>
-          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-orange-400">
-            <p className="text-orange-500 text-sm font-bold uppercase">ACTIVE POWER (W)</p>
-            <h1 className="text-4xl font-mono mt-1 text-white break-words">{power}</h1>
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-3 sm:p-5 border-l-4 border-r-4 border-orange-400">
+            <p className="text-orange-500 text-xs sm:text-sm font-bold uppercase">ACTIVE POWER (W)</p>
+            <h1 className="text-2xl sm:text-4xl font-mono mt-1 text-white break-words">{power}</h1>
           </div>
-          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-sky-400">
-            <p className="text-sky-500 text-sm font-bold uppercase">APPARENT POWER (VA)</p>
-            <h1 className="text-4xl font-mono mt-1 text-white break-words">{apparent}</h1>
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-3 sm:p-5 border-l-4 border-r-4 border-sky-400">
+            <p className="text-sky-500 text-xs sm:text-sm font-bold uppercase">APPARENT POWER (VA)</p>
+            <h1 className="text-2xl sm:text-4xl font-mono mt-1 text-white break-words">{apparent}</h1>
           </div>
-          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-pink-400">
-            <p className="text-pink-500 text-sm font-bold uppercase">REACTIVE POWER (VAR)</p>
-            <h1 className="text-4xl font-mono mt-1 text-white break-words">{reactive}</h1>
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-3 sm:p-5 border-l-4 border-r-4 border-pink-400">
+            <p className="text-pink-500 text-xs sm:text-sm font-bold uppercase">REACTIVE POWER (VAR)</p>
+            <h1 className="text-2xl sm:text-4xl font-mono mt-1 text-white break-words">{reactive}</h1>
           </div>
         </div>
 
         {/* KAPASITOR */}
-        <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 mb-10 border-l-4 border-r-4 border-amber-500">
-          <p className="text-amber-500 text-sm font-bold uppercase">BANK CAPACITOR STATUS</p>
-          <h1 className="text-3xl font-mono mt-1 text-white break-words">{lcd.line4}</h1>
+        <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-3 sm:p-5 mb-6 sm:mb-10 border-l-4 border-r-4 border-amber-500">
+          <p className="text-amber-500 text-xs sm:text-sm font-bold uppercase">BANK CAPACITOR STATUS</p>
+          <h1 className="text-xl sm:text-3xl font-mono mt-1 text-white break-words">{lcd.line4}</h1>
         </div>
 
-        {/* CHART 2 KOLOM */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-slate-900/50 rounded-2xl p-4 shadow-xl border-l-4 border-b-4 border-emerald-500">
-            <h2 className="text-emerald-500 font-bold mb-3">CURRENT (Ampere)</h2>
-            <ResponsiveContainer width="100%" height={280}>
+        {/* CHART SECTION - responsif */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          <div className="bg-slate-900/50 rounded-2xl p-3 sm:p-4 shadow-xl border-l-4 border-b-4 border-emerald-500">
+            <h2 className="text-emerald-500 font-bold mb-2 text-sm sm:text-base">CURRENT (Ampere)</h2>
+            <ResponsiveContainer width="100%" height={250}>
               <LineChart data={chartData}>
                 <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
-                <XAxis dataKey="time" stroke="#fff" tick={{ fontSize: 12 }} angle={-30} textAnchor="end" height={50} />
-                <YAxis stroke="#fff" />
+                <XAxis dataKey="time" stroke="#fff" tick={{ fontSize: 10 }} angle={-30} textAnchor="end" height={40} />
+                <YAxis stroke="#fff" width={30} />
                 <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px" }} labelStyle={{ color: "#fff" }} itemStyle={{ color: "#fff" }} />
-                <Line type="monotone" dataKey="current" stroke="#10b981" strokeWidth={3} dot={false} />
+                <Line type="monotone" dataKey="current" stroke="#10b981" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <div className="bg-slate-900/50 rounded-2xl p-4 shadow-xl border-l-4 border-b-4 border-violet-500">
-            <h2 className="text-violet-500 font-bold mb-3">POWER FACTOR (cos φ)</h2>
-            <ResponsiveContainer width="100%" height={280}>
+          <div className="bg-slate-900/50 rounded-2xl p-3 sm:p-4 shadow-xl border-l-4 border-b-4 border-violet-500">
+            <h2 className="text-violet-500 font-bold mb-2 text-sm sm:text-base">POWER FACTOR (cos φ)</h2>
+            <ResponsiveContainer width="100%" height={250}>
               <LineChart data={chartData}>
                 <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
-                <XAxis dataKey="time" stroke="#fff" tick={{ fontSize: 12 }} angle={-30} textAnchor="end" height={50} />
-                <YAxis stroke="#fff" domain={[0, 1]} />
+                <XAxis dataKey="time" stroke="#fff" tick={{ fontSize: 10 }} angle={-30} textAnchor="end" height={40} />
+                <YAxis stroke="#fff" domain={[0, 1]} width={30} />
                 <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px" }} labelStyle={{ color: "#fff" }} itemStyle={{ color: "#fff" }} />
-                <Line type="monotone" dataKey="pf" stroke="#8b5cf6" strokeWidth={3} dot={false} />
+                <Line type="monotone" dataKey="pf" stroke="#8b5cf6" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <div className="bg-slate-900/50 rounded-2xl p-4 shadow-xl border-l-4 border-b-4 border-cyan-500">
-            <h2 className="text-cyan-500 font-bold mb-3">APPARENT POWER (VA)</h2>
-            <ResponsiveContainer width="100%" height={280}>
+          <div className="bg-slate-900/50 rounded-2xl p-3 sm:p-4 shadow-xl border-l-4 border-b-4 border-cyan-500">
+            <h2 className="text-cyan-500 font-bold mb-2 text-sm sm:text-base">APPARENT POWER (VA)</h2>
+            <ResponsiveContainer width="100%" height={250}>
               <LineChart data={chartData}>
                 <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
-                <XAxis dataKey="time" stroke="#fff" tick={{ fontSize: 12 }} angle={-30} textAnchor="end" height={50} />
-                <YAxis stroke="#fff" />
+                <XAxis dataKey="time" stroke="#fff" tick={{ fontSize: 10 }} angle={-30} textAnchor="end" height={40} />
+                <YAxis stroke="#fff" width={30} />
                 <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px" }} labelStyle={{ color: "#fff" }} itemStyle={{ color: "#fff" }} />
-                <Line type="monotone" dataKey="apparent" stroke="#06b6d4" strokeWidth={3} dot={false} />
+                <Line type="monotone" dataKey="apparent" stroke="#06b6d4" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
-          <div className="bg-slate-900/50 rounded-2xl p-4 shadow-xl border-l-4 border-b-4 border-pink-500">
-            <h2 className="text-pink-500 font-bold mb-3">REACTIVE POWER (VAR)</h2>
-            <ResponsiveContainer width="100%" height={280}>
+          <div className="bg-slate-900/50 rounded-2xl p-3 sm:p-4 shadow-xl border-l-4 border-b-4 border-pink-500">
+            <h2 className="text-pink-500 font-bold mb-2 text-sm sm:text-base">REACTIVE POWER (VAR)</h2>
+            <ResponsiveContainer width="100%" height={250}>
               <LineChart data={chartData}>
                 <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
-                <XAxis dataKey="time" stroke="#fff" tick={{ fontSize: 12 }} angle={-30} textAnchor="end" height={50} />
-                <YAxis stroke="#fff" />
+                <XAxis dataKey="time" stroke="#fff" tick={{ fontSize: 10 }} angle={-30} textAnchor="end" height={40} />
+                <YAxis stroke="#fff" width={30} />
                 <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px" }} labelStyle={{ color: "#fff" }} itemStyle={{ color: "#fff" }} />
-                <Line type="monotone" dataKey="reactive" stroke="#ec4899" strokeWidth={3} dot={false} />
+                <Line type="monotone" dataKey="reactive" stroke="#ec4899" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        <footer className="mt-12 text-center text-slate-400 text-xs border-t border-white/10 pt-6">
+        <footer className="mt-8 sm:mt-12 text-center text-slate-400 text-xs border-t border-white/10 pt-4 sm:pt-6">
           <p>© 2026 — Sistem Pemantauan APFC Berbasis IoT | High Voltage Theme</p>
         </footer>
       </div>
