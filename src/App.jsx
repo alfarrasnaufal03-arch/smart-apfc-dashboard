@@ -1,161 +1,362 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ref, onValue } from "firebase/database";
-import { db } from "./firebase";
-export default function SmartAPFCDashboard() {
-  useEffect(() => {
-  const dataRef = ref(db, "PFC");
+import { db, app } from "./firebase";
 
-  onValue(dataRef, (snapshot) => {
-    const data = snapshot.val();
-    console.log(data);
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut,
+} from "firebase/auth";
+
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from "recharts";
+
+export default function App() {
+  // =========================
+  // AUTH
+  // =========================
+  const auth = getAuth(app);
+
+  const [user, setUser] = useState(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  // =========================
+  // DATA LCD
+  // =========================
+  const [lcd, setLcd] = useState({
+    line1: "V:0.0V PF:0.00",
+    line2: "I:0.00A S :0VA",
+    line3: "P:0W Q :0VAR",
+    line4: "CAP:OFF",
   });
-}, []);
-  const data = {
-    voltage: 220.4,
-    current: 3.25,
-    power: 580,
-    pf: 0.98,
-    apparent: 592,
-    reactive: 110,
-    cap: '48.5uF',
-    relay: ['ON', 'ON', 'OFF', 'ON'],
+
+  const [chartData, setChartData] = useState([]);
+
+  // =========================
+  // AUTH LISTENER
+  // =========================
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (u) => {
+      setUser(u);
+    });
+    return () => unsub();
+  }, []);
+
+  // =========================
+  // LOGIN
+  // =========================
+  const login = async () => {
+    try {
+      setLoginError("");
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      setLoginError("Email atau password salah");
+    }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-cyan-900 text-white p-6 font-sans">
-      <div className="max-w-7xl mx-auto">
-        {/* HEADER */}
-        <div className="flex flex-col md:flex-row items-center justify-between mb-8 gap-4">
-          <div>
-            <h1 className="text-4xl font-bold tracking-wide">
-              SMART APFC DASHBOARD
-            </h1>
-            <p className="text-cyan-200 mt-2 text-lg">
-              Automatic Power Factor Correction Monitoring System
+  const logout = async () => {
+    await signOut(auth);
+  };
+
+  // =========================
+  // FIREBASE REALTIME DB
+  // =========================
+  useEffect(() => {
+    if (!user) return;
+
+    const dataRef = ref(db, "PFC");
+
+    const unsub = onValue(dataRef, (snapshot) => {
+      const val = snapshot.val();
+      if (!val) return;
+
+      setLcd({
+        line1: val.line1 || "",
+        line2: val.line2 || "",
+        line3: val.line3 || "",
+        line4: val.line4 || "",
+      });
+
+      const voltage = parseFloat(val.line1?.match(/V:\s*([\d.]+)/)?.[1]) || 0;
+      const pf = parseFloat(val.line1?.match(/PF:\s*([\d.]+)/)?.[1]) || 0;
+      const current = parseFloat(val.line2?.match(/I:\s*([\d.]+)/)?.[1]) || 0;
+      const apparent = parseFloat(val.line2?.match(/S\s*:\s*([\d.]+)/)?.[1]) || 0;
+      const power = parseFloat(val.line3?.match(/P:\s*([\d.]+)/)?.[1]) || 0;
+      const reactive = parseFloat(val.line3?.match(/Q\s*:\s*([\d.]+)/)?.[1]) || 0;
+
+      setChartData((prev) => {
+        const newData = [
+          ...prev,
+          {
+            time: new Date().toLocaleTimeString(),
+            voltage,
+            pf,
+            current,
+            apparent,
+            power,
+            reactive,
+          },
+        ];
+        return newData.slice(-20);
+      });
+    });
+
+    return () => unsub();
+  }, [user]);
+
+  // =========================
+  // PARSING DISPLAY
+  // =========================
+  const voltage = lcd.line1.match(/V:\s*([\d.]+V?)/)?.[1] || "0.0V";
+  const pf = lcd.line1.match(/PF:\s*([\d.]+)/)?.[1] || "0.00";
+  const current = lcd.line2.match(/I:\s*([\d.]+A?)/)?.[1] || "0.00A";
+  const apparent = lcd.line2.match(/S\s*:\s*([\d.]+VA?)/)?.[1] || "0VA";
+  const power = lcd.line3.match(/P:\s*([\d.]+W?)/)?.[1] || "0W";
+  const reactive = lcd.line3.match(/Q\s*:\s*([\d.]+VAR?)/)?.[1] || "0VAR";
+
+  // =========================
+  // LOGIN PAGE (modern & akademis)
+  // =========================
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-800 via-indigo-950 to-violet-950">
+        <div className="bg-white/10 backdrop-blur-md p-8 rounded-2xl shadow-2xl w-[380px] border border-white/20">
+          <h1 className="text-3xl font-bold text-center mb-2 bg-gradient-to-r from-cyan-300 to-blue-300 bg-clip-text text-transparent">
+            APFC SYSTEM LOGIN
+          </h1>
+          <p className="text-center text-slate-300 text-sm mb-8">
+           AUTOMATIC POWER FACTOR CORRECTION
+          </p>
+
+          <input
+            className="w-full p-3 mb-4 rounded-lg bg-black/30 border border-white/20 text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            placeholder="Email"
+            type="email"
+            onChange={(e) => setEmail(e.target.value)}
+          />
+
+          <input
+            type="password"
+            className="w-full p-3 mb-4 rounded-lg bg-black/30 border border-white/20 text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+            placeholder="Password"
+            onChange={(e) => setPassword(e.target.value)}
+          />
+
+          {loginError && (
+            <p className="text-red-400 text-sm mb-4 text-center bg-red-900/30 py-2 rounded-lg">
+              {loginError}
             </p>
-          </div>
+          )}
 
-          <div className="bg-white/10 backdrop-blur-md border border-cyan-400/30 px-6 py-4 rounded-3xl shadow-2xl">
-            <p className="text-sm text-cyan-100">System Status</p>
-            <div className="flex items-center gap-3 mt-2">
-              <div className="w-4 h-4 rounded-full bg-green-400 animate-pulse"></div>
-              <span className="font-semibold text-lg">ONLINE</span>
-            </div>
-          </div>
-        </div>
+          <button
+            onClick={login}
+            className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 p-3 rounded-lg font-bold transition-all duration-200 shadow-lg"
+          >
+            LOGIN
+          </button>
 
-        {/* MAIN GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-          {/* VOLTAGE */}
-          <div className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-3xl p-6 shadow-2xl hover:scale-105 transition-all duration-300">
-            <p className="text-lg font-semibold opacity-90">Voltage</p>
-            <h2 className="text-5xl font-bold mt-4">{data.voltage}</h2>
-            <p className="text-xl mt-2">Volt</p>
-          </div>
-
-          {/* CURRENT */}
-          <div className="bg-gradient-to-br from-cyan-400 to-blue-600 rounded-3xl p-6 shadow-2xl hover:scale-105 transition-all duration-300">
-            <p className="text-lg font-semibold opacity-90">Current</p>
-            <h2 className="text-5xl font-bold mt-4">{data.current}</h2>
-            <p className="text-xl mt-2">Ampere</p>
-          </div>
-
-          {/* POWER */}
-          <div className="bg-gradient-to-br from-pink-500 to-red-600 rounded-3xl p-6 shadow-2xl hover:scale-105 transition-all duration-300">
-            <p className="text-lg font-semibold opacity-90">Active Power</p>
-            <h2 className="text-5xl font-bold mt-4">{data.power}</h2>
-            <p className="text-xl mt-2">Watt</p>
-          </div>
-
-          {/* PF */}
-          <div className="bg-gradient-to-br from-green-400 to-emerald-600 rounded-3xl p-6 shadow-2xl hover:scale-105 transition-all duration-300">
-            <p className="text-lg font-semibold opacity-90">Power Factor</p>
-            <h2 className="text-5xl font-bold mt-4">{data.pf}</h2>
-            <p className="text-xl mt-2">Cos φ</p>
-          </div>
-        </div>
-
-        {/* SECOND SECTION */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-8">
-          {/* POWER DETAILS */}
-          <div className="xl:col-span-2 bg-white/10 backdrop-blur-md border border-white/10 rounded-3xl p-6 shadow-2xl">
-            <h2 className="text-2xl font-bold mb-6 text-cyan-300">
-              Power Monitoring
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-slate-900/40 rounded-2xl p-5 border border-cyan-400/20">
-                <p className="text-cyan-200 text-sm">Apparent Power</p>
-                <h3 className="text-4xl font-bold mt-3">{data.apparent} VA</h3>
-              </div>
-
-              <div className="bg-slate-900/40 rounded-2xl p-5 border border-pink-400/20">
-                <p className="text-pink-200 text-sm">Reactive Power</p>
-                <h3 className="text-4xl font-bold mt-3">{data.reactive} VAR</h3>
-              </div>
-
-              <div className="bg-slate-900/40 rounded-2xl p-5 border border-green-400/20 md:col-span-2">
-                <p className="text-green-200 text-sm">Capacitor Bank Active</p>
-                <h3 className="text-5xl font-bold mt-3 text-green-300">
-                  {data.cap}
-                </h3>
-              </div>
-            </div>
-          </div>
-
-          {/* RELAY STATUS */}
-          <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-3xl p-6 shadow-2xl">
-            <h2 className="text-2xl font-bold mb-6 text-yellow-300">
-              Relay Status
-            </h2>
-
-            <div className="space-y-4">
-              {data.relay.map((status, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between bg-slate-900/40 p-4 rounded-2xl"
-                >
-                  <span className="text-lg font-medium">Relay R{index + 1}</span>
-
-                  <div
-                    className={`px-4 py-2 rounded-xl font-bold ${
-                      status === 'ON'
-                        ? 'bg-green-500 text-white'
-                        : 'bg-red-500 text-white'
-                    }`}
-                  >
-                    {status}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* LCD DISPLAY */}
-        <div className="mt-8 bg-black rounded-3xl p-8 border-4 border-cyan-500 shadow-[0_0_40px_rgba(0,255,255,0.3)]">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-cyan-300">LCD Monitor Simulation</h2>
-            <div className="text-green-400 font-semibold animate-pulse">
-              LIVE DATA
-            </div>
-          </div>
-
-          <div className="bg-green-950 text-green-400 rounded-2xl p-6 font-mono text-xl leading-loose border border-green-500 shadow-inner">
-            <p>V: 220.4V   PF: 0.98</p>
-            <p>I: 3.25A    S : 592VA</p>
-            <p>P: 580W     Q : 110VAR</p>
-            <p>CAP: 48.5uF</p>
-          </div>
-        </div>
-
-        {/* FOOTER */}
-        <div className="mt-8 text-center text-cyan-200 opacity-80">
-          <p>
-            SMART APFC Monitoring System • Firebase Realtime Database • ESP8266
+          <p className="text-xs text-center text-slate-100 mt-6">
+            © 2026 — APFC MONITORING SYSTEM
           </p>
         </div>
       </div>
+    );
+  }
+
+  // =========================
+  // MAIN DASHBOARD (modern & akademis)
+  // =========================
+  return (
+  <div className="min-h-screen bg-gradient-to-br from-slate-900 via-lime-950 to-cyan-900 relative overflow-hidden">
+    {/* ========== BACKGROUND WATERMARK (subtle pattern) ========== */}
+    <div className="absolute inset-0 pointer-events-none select-none z-0">
+      <div className="absolute inset-0 flex flex-wrap justify-center items-center opacity-10 md:opacity-5">
+        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">cos φ</div> 
+        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">APFC</div>  
+        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">λ</div> 
+        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">PFC</div> 
+        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">cos φ</div> 
+        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">APFC</div> 
+        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">λ</div> 
+        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">PFC</div>
+        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">cos φ</div> 
+        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">APFC</div>  
+        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">λ</div> 
+        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">PFC</div> 
+        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">cos φ</div> 
+        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">APFC</div> 
+        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">λ</div> 
+        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">PFC</div>
+        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">cos φ</div> 
+        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">APFC</div>  
+        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">λ</div> 
+        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">PFC</div> 
+        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">cos φ</div> 
+        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">APFC</div> 
+        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">λ</div> 
+        <div className="text-6xl md:text-9xl font-mono font-bold text-white/100 mx-4 my-2">PFC</div> 
+      </div>
+      {/* gelombang listrik dekoratif */}
+      <svg className="absolute bottom-0 left-0 w-full h-32 opacity-5" preserveAspectRatio="none" viewBox="0 0 1200 120">
+        <path d="M0,64L80,69C160,75,240,85,320,80C400,75,480,53,560,48C640,43,720,53,800,64C880,75,960,85,1040,80C1120,75,1200,53,1200,53L1200,120L0,120Z" fill="white" />
+      </svg>
     </div>
+
+    {/* ========== KONTEN UTAMA (dashboard) ========== */}
+    <div className="relative z-10 max-w-7xl mx-auto px-4 py-6 md:px-6 md:py-8">
+    </div>
+
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-lime-950 to-cyan-900">
+      <div className="max-w-7xl mx-auto px-4 py-6 md:px-6 md:py-8">
+
+        {/* HEADER dengan gradien dan garis bawah */}
+        <div className="text-center mb-10">
+          <h1 className="text-3xl md:text-5xl font-bold bg-gradient-to-r from-yellow-400 via-red-500 to-orange-500 bg-clip-text text-transparent">
+            APFC MONITORING SYSTEM FOR RESIDENTIAL LOADS
+          </h1>
+          <p className="text-red-200 text-sm md:text-base mt-2 border-b border-white/10 inline-block pb-1 px-4">
+            SISTEM PEMMANTAUAN PERBAIKAN FAKTOR DAYA OTOMATIS BEBAN RUMAH TANGGA
+          </p>
+          <button
+            onClick={logout}
+            className="mt-4 text-red-400 hover:text-red-300 text-sm bg-black/100 px-4 py-1 rounded-full transition"
+          >
+            LOGOUT ↺
+          </button>
+        </div>
+
+        {/* PARAMETER CARD GRID - glassmorphism modern */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+          {/* Voltage */}
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-cyan-400 shadow-lg">
+            <p className="text-cyan-500 text-sm font-bold uppercase tracking-wider">VOLTAGE ( V )</p>
+            <h1 className="text-4xl font-mono mt-1 text-white">{voltage}</h1>
+          </div>
+
+          {/* Current */}
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-emerald-400 shadow-lg">
+            <p className="text-emerald-500 text-sm font-bold uppercase tracking-wider">CURRENT ( A )</p>
+            <h1 className="text-4xl font-mono mt-1 text-white">{current}</h1>
+          </div>
+
+          {/* Power Factor */}
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-violet-400 shadow-lg">
+            <p className="text-violet-500 text-sm font-bold uppercase tracking-wider">POWER FACTOR ( cos φ )</p>
+            <h1 className="text-4xl font-mono mt-1 text-white">{pf}</h1>
+          </div>
+
+          {/* Active Power */}
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-orange-400 shadow-lg">
+            <p className="text-orange-500 text-sm font-bold uppercase tracking-wider">ACTIVE POWER ( W )</p>
+            <h1 className="text-4xl font-mono mt-1 text-white">{power}</h1>
+          </div>
+
+          {/* Apparent Power */}
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-sky-400 shadow-lg">
+            <p className="text-sky-500 text-sm font-bold uppercase tracking-wider">APPARENT POWER ( VA )</p>
+            <h1 className="text-4xl font-mono mt-1 text-white">{apparent}</h1>
+          </div>
+
+          {/* Reactive Power */}
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-pink-400 shadow-lg">
+            <p className="text-pink-500 text-sm font-bold uppercase tracking-wider"> REACTIVE POWER ( VAR )</p>
+            <h1 className="text-4xl font-mono mt-1 text-white">{reactive}</h1>
+          </div>
+        </div>
+
+        {/* Kapasitor card full width */}
+        <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 mb-10 border-l-4 border-r-4 border-amber-500 shadow-lg">
+          <p className="text-amber-500 text-sm font-bold uppercase tracking-wider">BANK CAPACITOR STATUS </p>
+          <h1 className="text-3xl font-mono mt-1 text-white">{lcd.line4}</h1>
+        </div>
+
+        {/* CHART SECTION - grid responsif 2 kolom untuk layar sedang ke atas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          {/* Current Chart */}
+          <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 shadow-xl border-l-4 border-b-4 border-emerald-500">
+            <h2 className="text-emerald-500 font-bold mb-3 flex items-center gap-2">
+              <span className="w-2 h-2 bg-emerald-400 rounded-full"></span>
+              CURRENT (Ampere)
+            </h2>
+            <ResponsiveContainer width="100%" height={280}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                <XAxis dataKey="time" stroke="#ffff" tick={{ fontSize: 14 }} angle={-35} textAnchor="end" height={50} />
+                <YAxis stroke="#ffff" />
+                <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px", color: "#ffff" }} />
+                <Line type="monotone" dataKey="current" stroke="#10b981" strokeWidth={3} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Power Factor Chart */}
+          <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 shadow-xl border-l-4 border-b-4 border-violet-500">
+            <h2 className="text-violet-500 font-bold mb-3 flex items-center gap-2">
+              <span className="w-2 h-2 bg-violet-400 rounded-full"></span>
+              POWER FACTOR (cos φ)
+            </h2>
+            <ResponsiveContainer width="100%" height={280}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                <XAxis dataKey="time" stroke="#ffff" tick={{ fontSize: 14 }} angle={-35} textAnchor="end" height={50} />
+                <YAxis stroke="#ffff" domain={[0, 1]} />
+                <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px", color: "#ffff" }} />
+                <Line type="monotone" dataKey="pf" stroke="#8b5cf6" strokeWidth={3} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Apparent Power Chart */}
+          <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 shadow-xl border-l-4 border-b-4 border-cyan-500">
+            <h2 className="text-cyan-500 font-bold mb-3 flex items-center gap-2">
+              <span className="w-2 h-2 bg-cyan-400 rounded-full"></span>
+              APPARENT POWER (VA)
+            </h2>
+            <ResponsiveContainer width="100%" height={280}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                <XAxis dataKey="time" stroke="#ffff" tick={{ fontSize: 14 }} angle={-35} textAnchor="end" height={50} />
+                <YAxis stroke="#ffff" />
+                <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px", color: "#ffff" }} />
+                <Line type="monotone" dataKey="apparent" stroke="#06b6d4" strokeWidth={3} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* Reactive Power Chart */}
+          <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 shadow-xl border-l-4 border-b-4 border-pink-500">
+            <h2 className="text-pink-500 font-bold mb-3 flex items-center gap-2">
+              <span className="w-2 h-2 bg-pink-400 rounded-full"></span>
+              REACTIVE POWER (VAR)
+            </h2>
+            <ResponsiveContainer width="100%" height={280}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                <XAxis dataKey="time" stroke="#ffff" tick={{ fontSize: 14 }} angle={-35} textAnchor="end" height={50} />
+                <YAxis stroke="#ffff" />
+                <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px", color: "#ffff" }}/>
+                <Line type="monotone" dataKey="reactive" stroke="#ec4899" strokeWidth={3} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Footer akademis */}
+        <footer className="mt-12 text-center text-slate-400 text-xs border-t border-white/10 pt-6">
+          <p>© 2026 — Sistem Pemantauan APFC Berbasis IoT</p>
+        </footer>
+      </div>
+    </div>
+  </div>
   );
 }
