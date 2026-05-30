@@ -89,17 +89,32 @@ export default function App() {
   // =========================
   // LOGIN
   // =========================
-  const login = async () => {
-    try {
-      setLoginError("");
-      await signInWithEmailAndPassword(auth, email, password);
-    } catch (err) {
-      setLoginError("Email atau password salah");
+ const login = async () => {
+  try {
+    setLoginError("");
+    await signInWithEmailAndPassword(auth, email, password);
+  } catch (err) {
+    console.log("Login error:", err.code); // debug
+    if (err.code === "auth/network-request-failed") {
+      setLoginError("Tidak ada koneksi internet. Periksa jaringan Anda.");
+    } else if (
+      err.code === "auth/user-not-found" ||
+      err.code === "auth/wrong-password" ||
+      err.code === "auth/invalid-credential"
+    ) {
+      setLoginError("Email atau password salah.");
+    } else {
+      setLoginError("Gagal login: " + err.message);
     }
-  };
+  }
+};
+
+  // =========================
+  // LOGOUT
+  // =========================
   const logout = async () => {
-    await signOut(auth);
-  };
+  await signOut(auth);
+};
 
   // =========================
   // FIREBASE REALTIME DB
