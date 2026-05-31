@@ -264,7 +264,7 @@ export default function App() {
         {/* Header */}
         <div className="text-center mb-6">
           <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-yellow-400 via-red-500 to-orange-500 bg-clip-text text-transparent">
-            APFC MONITORING SYSTEM
+            APFC MONITORING SYSTEM FOR RESIDENTIAL LOADS
           </h1>
           <p className="text-red-200 text-xs md:text-sm mt-1">
             SISTEM PEMANTAUAN KOREKSI FAKTOR DAYA OTOMATIS
@@ -316,7 +316,7 @@ export default function App() {
               <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 shadow-xl border-l-4 border-b-4 border-emerald-500">
                 <h2 className="text-emerald-500 font-bold mb-3 flex items-center gap-2">
                   <span className="w-2 h-2 bg-emerald-400 rounded-full"></span>
-                  CURRENT (Ampere)
+                  Current (Ampere)
                 </h2>
                 <ResponsiveContainer width="100%" height={280}>
                   <LineChart data={chartData}>
@@ -332,7 +332,7 @@ export default function App() {
               <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 shadow-xl border-l-4 border-b-4 border-violet-500">
                 <h2 className="text-violet-500 font-bold mb-3 flex items-center gap-2">
                   <span className="w-2 h-2 bg-violet-400 rounded-full"></span>
-                  POWER FACTOR (cos φ)
+                  Power Factor (cos φ)
                 </h2>
                 <ResponsiveContainer width="100%" height={280}>
                   <LineChart data={chartData}>
@@ -348,7 +348,7 @@ export default function App() {
               <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 shadow-xl border-l-4 border-b-4 border-cyan-500">
                 <h2 className="text-cyan-500 font-bold mb-3 flex items-center gap-2">
                   <span className="w-2 h-2 bg-cyan-400 rounded-full"></span>
-                  APPARENT POWER (VA)
+                  Apparent Power (Volt-Ampere)
                 </h2>
                 <ResponsiveContainer width="100%" height={280}>
                   <LineChart data={chartData}>
@@ -364,7 +364,7 @@ export default function App() {
               <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 shadow-xl border-l-4 border-b-4 border-pink-500">
                 <h2 className="text-pink-500 font-bold mb-3 flex items-center gap-2">
                   <span className="w-2 h-2 bg-pink-400 rounded-full"></span>
-                  REACTIVE POWER (VAR)
+                  Reactive Power (Volt-Ampere Reactive)
                 </h2>
                 <ResponsiveContainer width="100%" height={280}>
                   <LineChart data={chartData}>
@@ -381,16 +381,16 @@ export default function App() {
 
           {activeTab === "info" && (
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/20 text-center">
-              <h2 className="text-2xl font-bold text-white mb-4">ℹ️ Info Sistem</h2>
-              <p className="text-slate-300">Status Perangkat: {deviceOnline ? "🟢 Online" : "🔴 Offline"}</p>
-              <p className="text-slate-300 mt-2">Data terakhir diperbarui: {new Date(lastUpdate).toLocaleString()}</p>
+              <h2 className="text-2xl font-bold text-white mb-4">ℹ️System Information</h2>
+              <p className="text-slate-300">Device Status: {deviceOnline ? "🟢 Online" : "🔴 Offline"}</p>
+              <p className="text-slate-300 mt-2">Last Data Received: {new Date(lastUpdate).toLocaleString()}</p>
               <button
                 onClick={logout}
                 className="mt-6 bg-red-600 hover:bg-red-700 px-6 py-2 rounded-full text-white font-semibold transition"
               >
                 LOGOUT ↺
               </button>
-              <p className="text-xs text-slate-400 mt-6">© 2026 — APFC MONITORING SYSTEM</p>
+              <p className="text-xs text-slate-400 mt-6">© 2026 — Automatic Power Factor Correction Monitoring System</p>
             </div>
           )}
         </div>
@@ -408,7 +408,7 @@ export default function App() {
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
             </svg>
-            <span className="text-xs mt-1">Parameters</span>
+            <span className="text-xs mt-1">Live Data</span>
           </button>
           <button
             onClick={() => setActiveTab("charts")}
@@ -419,7 +419,7 @@ export default function App() {
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
             </svg>
-            <span className="text-xs mt-1">Charts</span>
+            <span className="text-xs mt-1">Graph Monitor</span>
           </button>
           <button
             onClick={() => setActiveTab("info")}
