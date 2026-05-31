@@ -289,13 +289,13 @@ export default function App() {
                   <p className="text-violet-500 text-sm font-bold uppercase tracking-wider">POWER FACTOR ( cos φ )</p>
                   <h1 className="text-4xl font-mono mt-1 text-white">{pf}</h1>
                 </div>
-                <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-orange-400 shadow-lg">
-                  <p className="text-orange-500 text-sm font-bold uppercase tracking-wider">ACTIVE POWER ( W )</p>
-                  <h1 className="text-4xl font-mono mt-1 text-white">{power}</h1>
-                </div>
                 <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-sky-400 shadow-lg">
                   <p className="text-sky-500 text-sm font-bold uppercase tracking-wider">APPARENT POWER ( VA )</p>
                   <h1 className="text-4xl font-mono mt-1 text-white">{apparent}</h1>
+                </div>
+                <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-orange-400 shadow-lg">
+                  <p className="text-orange-500 text-sm font-bold uppercase tracking-wider">ACTIVE POWER ( W )</p>
+                  <h1 className="text-4xl font-mono mt-1 text-white">{power}</h1>
                 </div>
                 <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-pink-400 shadow-lg">
                   <p className="text-pink-500 text-sm font-bold uppercase tracking-wider">REACTIVE POWER ( VAR )</p>
