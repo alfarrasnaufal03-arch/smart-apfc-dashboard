@@ -369,12 +369,12 @@ export default function App() {
                         <tr>
                           <th className="px-4 py-3">#</th>
                           <th className="px-4 py-3">Time</th>
-                          <th className="px-4 py-3">Voltage (V)</th>
-                          <th className="px-4 py-3">Current (A)</th>
-                          <th className="px-4 py-3">PF (cos φ)</th>
-                          <th className="px-4 py-3">Apparent (VA)</th>
-                          <th className="px-4 py-3">Active (W)</th>
-                          <th className="px-4 py-3">Reactive (VAR)</th>
+                          <th className="px-4 py-3">V (V)</th>
+                          <th className="px-4 py-3">I (A)</th>
+                          <th className="px-4 py-3">cos φ</th>
+                          <th className="px-4 py-3">S (VA)</th>
+                          <th className="px-4 py-3">P (W)</th>
+                          <th className="px-4 py-3">Q (VAR)</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/5">
@@ -391,7 +391,7 @@ export default function App() {
                               <td className="px-4 py-2 font-mono text-xs">{row.time}</td>
                               <td className="px-4 py-2 font-mono text-sm text-cyan-300">{row.voltage.toFixed(1)}</td>
                               <td className="px-4 py-2 font-mono text-sm text-emerald-300">{row.current.toFixed(2)}</td>
-                              <td className="px-4 py-2 font-mono text-sm text-violet-300">{row.pf.toFixed(3)}</td>
+                              <td className="px-4 py-2 font-mono text-sm text-violet-300">{row.pf.toFixed(2)}</td>
                               <td className="px-4 py-2 font-mono text-sm text-sky-300">{row.apparent.toFixed(1)}</td>
                               <td className="px-4 py-2 font-mono text-sm text-orange-300">{row.power.toFixed(1)}</td>
                               <td className="px-4 py-2 font-mono text-sm text-pink-300">{row.reactive.toFixed(1)}</td>
