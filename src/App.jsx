@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { ref, onValue } from "firebase/database";
 import { db, app } from "./firebase";
 import {
@@ -22,11 +22,11 @@ import { useNetworkStatus } from "./hooks/useNetworkStatus";
 import DeviceOfflinePage from "./components/DeviceOfflinePage";
 
 export default function App() {
-  // ============ STATUS JARINGAN INTERNET ============
+  // ============ NETWORK STATUS ============
   const isOnline = true; 
 
-  // ============ DETEKSI PERANGKAT OFFLINE ===========
-  const DEVICE_TIMEOUT = 20000; // 20 detik
+  // ============ DEVICE OFFLINE DETECTION ===========
+  const DEVICE_TIMEOUT = 20000; // 20 seconds
 
   const getStoredLastUpdate = () => {
     const stored = localStorage.getItem('apfc_lastUpdate');
@@ -61,7 +61,7 @@ export default function App() {
   const [loginError, setLoginError] = useState("");
 
   // =========================
-  // DATA LCD
+  // LCD DATA
   // =========================
   const [lcd, setLcd] = useState({
     line1: "V:0.0V PF:0.00",
@@ -69,12 +69,54 @@ export default function App() {
     line3: "P:0W Q :0VAR",
     line4: "CAP:OFF",
   });
+  
+  // STORE ALL CHART DATA (no limit)
   const [chartData, setChartData] = useState([]);
 
   // =========================
   // BOTTOM NAVIGATION STATE
   // =========================
-  const [activeTab, setActiveTab] = useState("parameters"); 
+  const [activeTab, setActiveTab] = useState("parameters");
+
+  // =========================
+  // HISTORY SLIDER STATE
+  // =========================
+  const WINDOW_SIZE = 20; // number of data points to display
+  const [windowStart, setWindowStart] = useState(0);
+  const [isUserPanning, setIsUserPanning] = useState(false);
+  const prevDataLengthRef = useRef(0);
+
+  // Auto-slide to latest if slider is at the rightmost position
+  useEffect(() => {
+    const currentLen = chartData.length;
+    if (currentLen > prevDataLengthRef.current && !isUserPanning) {
+      const maxStart = Math.max(0, currentLen - WINDOW_SIZE);
+      const prevMaxStart = Math.max(0, prevDataLengthRef.current - WINDOW_SIZE);
+      if (windowStart === prevMaxStart || windowStart === prevDataLengthRef.current - WINDOW_SIZE) {
+        setWindowStart(maxStart);
+      }
+    }
+    prevDataLengthRef.current = currentLen;
+  }, [chartData.length, windowStart, isUserPanning]);
+
+  // Get data to display based on slider window
+  const getDisplayData = () => {
+    if (chartData.length <= WINDOW_SIZE) return chartData;
+    const start = Math.min(windowStart, chartData.length - WINDOW_SIZE);
+    return chartData.slice(start, start + WINDOW_SIZE);
+  };
+
+  const handleSliderChange = (e) => {
+    const newStart = parseInt(e.target.value, 10);
+    setWindowStart(newStart);
+    setIsUserPanning(true);
+  };
+
+  const goToLatest = () => {
+    const maxStart = Math.max(0, chartData.length - WINDOW_SIZE);
+    setWindowStart(maxStart);
+    setIsUserPanning(false);
+  };
 
   // =========================
   // AUTH LISTENER
@@ -95,15 +137,15 @@ export default function App() {
       await signInWithEmailAndPassword(auth, email, password);
     } catch (err) {
       if (err.code === "auth/network-request-failed") {
-        setLoginError("Tidak ada koneksi internet. Periksa jaringan Anda.");
+        setLoginError("No internet connection. Please check your network.");
       } else if (
         err.code === "auth/user-not-found" ||
         err.code === "auth/wrong-password" ||
         err.code === "auth/invalid-credential"
       ) {
-        setLoginError("Email atau password salah.");
+        setLoginError("Invalid email or password.");
       } else {
-        setLoginError("Gagal login: " + err.message);
+        setLoginError("Login failed: " + err.message);
       }
     }
   };
@@ -139,21 +181,19 @@ export default function App() {
       const power = parseFloat(val.line3?.match(/P:\s*([\d.]+)/)?.[1]) || 0;
       const reactive = parseFloat(val.line3?.match(/Q\s*:\s*([\d.]+)/)?.[1]) || 0;
 
-      setChartData((prev) => {
-        const newData = [
-          ...prev,
-          {
-            time: new Date().toLocaleTimeString(),
-            voltage,
-            pf,
-            current,
-            apparent,
-            power,
-            reactive,
-          },
-        ];
-        return newData.slice(-20);
-      });
+      // Store ALL data (no slice limit)
+      setChartData((prev) => [
+        ...prev,
+        {
+          time: new Date().toLocaleTimeString(),
+          voltage,
+          pf,
+          current,
+          apparent,
+          power,
+          reactive,
+        },
+      ]);
 
       const deviceTimestamp = val.timestamp ? parseInt(val.timestamp) * 1000 : Date.now();
       updateLastUpdate(deviceTimestamp);
@@ -162,7 +202,7 @@ export default function App() {
   }, [user]);
 
   // =========================
-  // PARSING DISPLAY
+  // PARSING DISPLAY VALUES
   // =========================
   const voltage = lcd.line1.match(/V:\s*([\d.]+V?)/)?.[1] || "0.0V";
   const pf = lcd.line1.match(/PF:\s*([\d.]+)/)?.[1] || "0.00";
@@ -223,9 +263,13 @@ export default function App() {
     return <DeviceOfflinePage />;
   }
 
-  // =========================
-  // DASHBOARD DENGAN BOTTOM NAVIGATION
-  // =========================
+  const displayData = getDisplayData();
+  const maxStart = Math.max(0, chartData.length - WINDOW_SIZE);
+  const showSlider = chartData.length > WINDOW_SIZE;
+  
+  // Prepare historical data for table (latest first)
+  const historicalData = [...chartData].reverse();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-lime-950 to-cyan-900 relative pb-20">
       {/* Watermark */}
@@ -267,15 +311,15 @@ export default function App() {
             APFC MONITORING SYSTEM FOR RESIDENTIAL LOADS
           </h1>
           <p className="text-red-200 text-xs md:text-sm mt-1">
-            SISTEM PEMANTAUAN KOREKSI FAKTOR DAYA OTOMATIS
+            AUTOMATIC POWER FACTOR CORRECTION MONITORING SYSTEM
           </p>
         </div>
 
-        {/* KONTEN BERDASARKAN TAB */}
+        {/* CONTENT BASED ON ACTIVE TAB */}
         <div className="mt-4">
           {activeTab === "parameters" && (
             <div>
-              {/* Grid 6 card parameter */}
+              {/* 6 parameter cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-6">
                 <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-cyan-400 shadow-lg">
                   <p className="text-cyan-500 text-sm font-bold uppercase tracking-wider">VOLTAGE ( V )</p>
@@ -303,87 +347,182 @@ export default function App() {
                 </div>
               </div>
               {/* Capacitor Bank Status */}
-              <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-amber-500 shadow-lg">
+              <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-amber-500 shadow-lg mb-8">
                 <p className="text-amber-500 text-sm font-bold uppercase tracking-wider">CAP. BANK STATUS</p>
                 <h1 className="text-3xl font-mono mt-1 text-white">{lcd.line4}</h1>
+              </div>
+
+              {/* Historical Data Table */}
+              <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 shadow-xl border border-white/10">
+                <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+                  <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-cyan-300">
+                    📋 Historical Data Log
+                  </h2>
+                  <span className="text-xs text-slate-100 bg-slate-800/50 px-3 py-1 rounded-full">
+                    Total Records: {chartData.length}
+                  </span>
+                </div>
+                <div className="overflow-x-auto">
+                  <div className="max-h-[400px] overflow-y-auto custom-scroll">
+                    <table className="w-full text-sm text-left text-slate-200">
+                      <thead className="sticky top-0 bg-slate-900/90 backdrop-blur-sm text-xs uppercase font-semibold tracking-wider border-b border-white/20">
+                        <tr>
+                          <th className="px-4 py-3">#</th>
+                          <th className="px-4 py-3">Time</th>
+                          <th className="px-4 py-3">Voltage (V)</th>
+                          <th className="px-4 py-3">Current (A)</th>
+                          <th className="px-4 py-3">PF (cos φ)</th>
+                          <th className="px-4 py-3">Apparent (VA)</th>
+                          <th className="px-4 py-3">Active (W)</th>
+                          <th className="px-4 py-3">Reactive (VAR)</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {historicalData.length === 0 ? (
+                          <tr>
+                            <td colSpan="8" className="text-center py-8 text-slate-400">
+                              No historical data available yet. Waiting for device...
+                            </td>
+                          </tr>
+                        ) : (
+                          historicalData.map((row, idx) => (
+                            <tr key={idx} className="hover:bg-white/5 transition-colors">
+                              <td className="px-4 py-2 font-mono text-xs text-slate-400">{idx + 1}</td>
+                              <td className="px-4 py-2 font-mono text-xs">{row.time}</td>
+                              <td className="px-4 py-2 font-mono text-sm text-cyan-300">{row.voltage.toFixed(1)}</td>
+                              <td className="px-4 py-2 font-mono text-sm text-emerald-300">{row.current.toFixed(2)}</td>
+                              <td className="px-4 py-2 font-mono text-sm text-violet-300">{row.pf.toFixed(3)}</td>
+                              <td className="px-4 py-2 font-mono text-sm text-sky-300">{row.apparent.toFixed(1)}</td>
+                              <td className="px-4 py-2 font-mono text-sm text-orange-300">{row.power.toFixed(1)}</td>
+                              <td className="px-4 py-2 font-mono text-sm text-pink-300">{row.reactive.toFixed(1)}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <p className="text-right text-[11px] text-slate-100 mt-3 italic">
+                  Latest data shown first • Real-time updates
+                </p>
               </div>
             </div>
           )}
 
           {activeTab === "charts" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* Current Chart */}
-              <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 shadow-xl border-l-4 border-b-4 border-emerald-500">
-                <h2 className="text-emerald-500 font-bold mb-3 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-emerald-400 rounded-full"></span>
-                  Current (Ampere)
-                </h2>
-                <ResponsiveContainer width="100%" height={280}>
-                  <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                    <XAxis dataKey="time" stroke="#fff" tick={{ fontSize: 12 }} angle={-35} textAnchor="end" height={50} />
-                    <YAxis stroke="#fff" />
-                    <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px", color: "#fff" }} />
-                    <Line type="monotone" dataKey="current" stroke="#10b981" strokeWidth={3} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-              {/* PF Chart */}
-              <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 shadow-xl border-l-4 border-b-4 border-violet-500">
-                <h2 className="text-violet-500 font-bold mb-3 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-violet-400 rounded-full"></span>
-                  Power Factor (cos φ)
-                </h2>
-                <ResponsiveContainer width="100%" height={280}>
-                  <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                    <XAxis dataKey="time" stroke="#fff" tick={{ fontSize: 12 }} angle={-35} textAnchor="end" height={50} />
-                    <YAxis stroke="#fff" domain={[0, 1]} />
-                    <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px", color: "#fff" }} />
-                    <Line type="monotone" dataKey="pf" stroke="#8b5cf6" strokeWidth={3} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-              {/* Apparent Power Chart */}
-              <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 shadow-xl border-l-4 border-b-4 border-cyan-500">
-                <h2 className="text-cyan-500 font-bold mb-3 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-cyan-400 rounded-full"></span>
-                  Apparent Power (Volt-Ampere)
-                </h2>
-                <ResponsiveContainer width="100%" height={280}>
-                  <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                    <XAxis dataKey="time" stroke="#fff" tick={{ fontSize: 12 }} angle={-35} textAnchor="end" height={50} />
-                    <YAxis stroke="#fff" />
-                    <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px", color: "#fff" }} />
-                    <Line type="monotone" dataKey="apparent" stroke="#06b6d4" strokeWidth={3} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-              {/* Reactive Power Chart */}
-              <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 shadow-xl border-l-4 border-b-4 border-pink-500">
-                <h2 className="text-pink-500 font-bold mb-3 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-pink-400 rounded-full"></span>
-                  Reactive Power (Volt-Ampere Reactive)
-                </h2>
-                <ResponsiveContainer width="100%" height={280}>
-                  <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                    <XAxis dataKey="time" stroke="#fff" tick={{ fontSize: 12 }} angle={-35} textAnchor="end" height={50} />
-                    <YAxis stroke="#fff" />
-                    <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px", color: "#fff" }} />
-                    <Line type="monotone" dataKey="reactive" stroke="#ec4899" strokeWidth={3} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
+            <div>
+              {/* Slider and Latest button */}
+              {showSlider && (
+                <div className="bg-slate-800/40 backdrop-blur-sm rounded-xl p-4 mb-5">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex justify-between items-center text-white text-sm">
+                      <span>📜 Slide to view previous data (Total {chartData.length} data points)</span>
+                      <button
+                        onClick={goToLatest}
+                        className="bg-cyan-600 hover:bg-cyan-700 px-3 py-1 rounded-full text-xs font-semibold transition"
+                      >
+                        Press for latest data ⚡
+                      </button>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={maxStart}
+                      value={windowStart}
+                      onChange={handleSliderChange}
+                      className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                    />
+                    <div className="flex justify-between text-xs text-slate-100">
+                      <span>Start (oldest)</span>
+                      <span>Latest</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {!showSlider && chartData.length > 0 && (
+                <div className="text-center text-slate-300 text-sm mb-3">
+                  Showing {chartData.length} data points (not enough for slider yet)
+                </div>
+              )}
+              {chartData.length === 0 && (
+                <div className="text-center text-slate-400 py-10">Waiting for data from device...</div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* Current Chart */}
+                <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 shadow-xl border-l-4 border-b-4 border-emerald-500">
+                  <h2 className="text-emerald-500 font-bold mb-3 flex items-center gap-2">
+                    <span className="w-2 h-2 bg-emerald-400 rounded-full"></span>
+                    Current (Ampere)
+                  </h2>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <LineChart data={displayData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                      <XAxis dataKey="time" stroke="#fff" tick={{ fontSize: 12 }} angle={-35} textAnchor="end" height={50} />
+                      <YAxis stroke="#fff" />
+                      <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px", color: "#fff" }} />
+                      <Line type="monotone" dataKey="current" stroke="#10b981" strokeWidth={3} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+                {/* PF Chart */}
+                <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 shadow-xl border-l-4 border-b-4 border-violet-500">
+                  <h2 className="text-violet-500 font-bold mb-3 flex items-center gap-2">
+                    <span className="w-2 h-2 bg-violet-400 rounded-full"></span>
+                    Power Factor (cos φ)
+                  </h2>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <LineChart data={displayData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                      <XAxis dataKey="time" stroke="#fff" tick={{ fontSize: 12 }} angle={-35} textAnchor="end" height={50} />
+                      <YAxis stroke="#fff" domain={[0, 1]} />
+                      <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px", color: "#fff" }} />
+                      <Line type="monotone" dataKey="pf" stroke="#8b5cf6" strokeWidth={3} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+                {/* Apparent Power Chart */}
+                <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 shadow-xl border-l-4 border-b-4 border-cyan-500">
+                  <h2 className="text-cyan-500 font-bold mb-3 flex items-center gap-2">
+                    <span className="w-2 h-2 bg-cyan-400 rounded-full"></span>
+                    Apparent Power (Volt-Ampere)
+                  </h2>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <LineChart data={displayData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                      <XAxis dataKey="time" stroke="#fff" tick={{ fontSize: 12 }} angle={-35} textAnchor="end" height={50} />
+                      <YAxis stroke="#fff" />
+                      <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px", color: "#fff" }} />
+                      <Line type="monotone" dataKey="apparent" stroke="#06b6d4" strokeWidth={3} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+                {/* Reactive Power Chart */}
+                <div className="bg-slate-900/50 backdrop-blur-sm rounded-2xl p-5 shadow-xl border-l-4 border-b-4 border-pink-500">
+                  <h2 className="text-pink-500 font-bold mb-3 flex items-center gap-2">
+                    <span className="w-2 h-2 bg-pink-400 rounded-full"></span>
+                    Reactive Power (Volt-Ampere Reactive)
+                  </h2>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <LineChart data={displayData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                      <XAxis dataKey="time" stroke="#fff" tick={{ fontSize: 12 }} angle={-35} textAnchor="end" height={50} />
+                      <YAxis stroke="#fff" />
+                      <Tooltip contentStyle={{ backgroundColor: "#0f172a", border: "none", borderRadius: "8px", color: "#fff" }} />
+                      <Line type="monotone" dataKey="reactive" stroke="#ec4899" strokeWidth={3} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             </div>
           )}
 
           {activeTab === "info" && (
             <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/20 text-center">
-              <h2 className="text-2xl font-bold text-white mb-4">ℹ️System Information</h2>
+              <h2 className="text-2xl font-bold text-white mb-4">ℹ️ System Information</h2>
               <p className="text-slate-300">Device Status: {deviceOnline ? "🟢 Online" : "🔴 Offline"}</p>
               <p className="text-slate-300 mt-2">Last Data Received: {new Date(lastUpdate).toLocaleString()}</p>
+              <p className="text-slate-300 mt-2">Total Data Points Stored: {chartData.length}</p>
               <button
                 onClick={logout}
                 className="mt-6 bg-red-600 hover:bg-red-700 px-6 py-2 rounded-full text-white font-semibold transition"
