@@ -23,7 +23,7 @@ import DeviceOfflinePage from "./components/DeviceOfflinePage";
 
 export default function App() {
   // ============ STATUS JARINGAN INTERNET ============
-  const isOnline = true; // bisa diganti dengan hook useNetworkStatus
+  const isOnline = true; 
 
   // ============ DETEKSI PERANGKAT OFFLINE ===========
   const DEVICE_TIMEOUT = 20000; // 20 detik
@@ -74,7 +74,7 @@ export default function App() {
   // =========================
   // BOTTOM NAVIGATION STATE
   // =========================
-  const [activeTab, setActiveTab] = useState("parameters"); // "parameters", "charts", "info"
+  const [activeTab, setActiveTab] = useState("parameters"); 
 
   // =========================
   // AUTH LISTENER
@@ -175,7 +175,7 @@ export default function App() {
   // RENDER
   // =========================
   if (!isOnline) {
-    return <OfflinePage />; // pastikan OfflinePage diimport
+    return <OfflinePage />;
   }
 
   if (!user) {
@@ -228,7 +228,7 @@ export default function App() {
   // =========================
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-lime-950 to-cyan-900 relative pb-20">
-      {/* Watermark (sama seperti asli) */}
+      {/* Watermark */}
       <div
         className="absolute inset-0 pointer-events-none select-none z-0 opacity-10 md:opacity-5"
         style={{
