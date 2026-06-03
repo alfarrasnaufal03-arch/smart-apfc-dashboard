@@ -73,6 +73,10 @@ export default function App() {
   // STORE ALL CHART DATA (no limit)
   const [chartData, setChartData] = useState([]);
 
+  // Separate state for frequency and capacitor status
+  const [frequency, setFrequency] = useState(50.0);
+  const [capStatus, setCapStatus] = useState("CAP:OFF");
+
   // =========================
   // BOTTOM NAVIGATION STATE
   // =========================
@@ -81,12 +85,11 @@ export default function App() {
   // =========================
   // HISTORY SLIDER STATE
   // =========================
-  const WINDOW_SIZE = 20; // number of data points to display
+  const WINDOW_SIZE = 20;
   const [windowStart, setWindowStart] = useState(0);
   const [isUserPanning, setIsUserPanning] = useState(false);
   const prevDataLengthRef = useRef(0);
 
-  // Auto-slide to latest if slider is at the rightmost position
   useEffect(() => {
     const currentLen = chartData.length;
     if (currentLen > prevDataLengthRef.current && !isUserPanning) {
@@ -99,7 +102,6 @@ export default function App() {
     prevDataLengthRef.current = currentLen;
   }, [chartData.length, windowStart, isUserPanning]);
 
-  // Get data to display based on slider window
   const getDisplayData = () => {
     if (chartData.length <= WINDOW_SIZE) return chartData;
     const start = Math.min(windowStart, chartData.length - WINDOW_SIZE);
@@ -174,6 +176,27 @@ export default function App() {
         line4: val.line4 || "",
       });
 
+      // Extract frequency from Firebase field or from line4
+      let freq = 50.0;
+      if (val.frequency !== undefined && !isNaN(parseFloat(val.frequency))) {
+        freq = parseFloat(val.frequency);
+      } else {
+        const freqMatch = val.line4?.match(/F:\s*([\d.]+)/);
+        if (freqMatch) freq = parseFloat(freqMatch[1]);
+      }
+      setFrequency(freq);
+
+      // Extract capacitor status (remove frequency part from line4)
+      let cap = val.line4 || "CAP:OFF";
+      const parts = cap.split(/Hz\s*/);
+      if (parts.length > 1) {
+        cap = parts[1].trim();
+      } else {
+        // If no "Hz", maybe it's just CAP status
+        if (!cap.includes("CAP:")) cap = "CAP:OFF";
+      }
+      setCapStatus(cap);
+
       const voltage = parseFloat(val.line1?.match(/V:\s*([\d.]+)/)?.[1]) || 0;
       const pf = parseFloat(val.line1?.match(/PF:\s*([\d.]+)/)?.[1]) || 0;
       const current = parseFloat(val.line2?.match(/I:\s*([\d.]+)/)?.[1]) || 0;
@@ -181,7 +204,6 @@ export default function App() {
       const power = parseFloat(val.line3?.match(/P:\s*([\d.]+)/)?.[1]) || 0;
       const reactive = parseFloat(val.line3?.match(/Q\s*:\s*([\d.]+)/)?.[1]) || 0;
 
-      // Store ALL data (no slice limit)
       setChartData((prev) => [
         ...prev,
         {
@@ -192,6 +214,7 @@ export default function App() {
           apparent,
           power,
           reactive,
+          frequency: freq,
         },
       ]);
 
@@ -267,12 +290,11 @@ export default function App() {
   const maxStart = Math.max(0, chartData.length - WINDOW_SIZE);
   const showSlider = chartData.length > WINDOW_SIZE;
   
-  // Prepare historical data for table (latest first)
   const historicalData = [...chartData].reverse();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-lime-950 to-cyan-900 relative pb-20">
-      {/* Watermark */}
+      {/* Watermark - sama seperti sebelumnya */}
       <div
         className="absolute inset-0 pointer-events-none select-none z-0 opacity-10 md:opacity-5"
         style={{
@@ -319,7 +341,7 @@ export default function App() {
         <div className="mt-4">
           {activeTab === "parameters" && (
             <div>
-              {/* 6 parameter cards */}
+              {/* 6 main parameter cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-6">
                 <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-cyan-400 shadow-lg">
                   <p className="text-cyan-500 text-sm font-bold uppercase tracking-wider">VOLTAGE ( V )</p>
@@ -346,10 +368,20 @@ export default function App() {
                   <h1 className="text-4xl font-mono mt-1 text-white">{reactive}</h1>
                 </div>
               </div>
-              {/* Capacitor Bank Status */}
-              <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-amber-500 shadow-lg mb-8">
-                <p className="text-amber-500 text-sm font-bold uppercase tracking-wider">CAP. BANK STATUS</p>
-                <h1 className="text-3xl font-mono mt-1 text-white">{lcd.line4}</h1>
+
+              {/* Two side-by-side cards: Frequency and Cap. Bank Status */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+                {/* Frequency Card */}
+                <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-yellow-400 shadow-lg">
+                  <p className="text-yellow-500 text-sm font-bold uppercase tracking-wider">FREQUENCY ( Hz )</p>
+                  <h1 className="text-4xl font-mono mt-1 text-white">{frequency.toFixed(1)}</h1>
+                </div>
+
+                {/* Capacitor Bank Status Card (clean, without frequency) */}
+                <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-5 border-l-4 border-r-4 border-amber-500 shadow-lg">
+                  <p className="text-amber-500 text-sm font-bold uppercase tracking-wider">CAP. BANK STATUS</p>
+                  <h1 className="text-3xl font-mono mt-1 text-white">{capStatus}</h1>
+                </div>
               </div>
 
               {/* Historical Data Table */}
@@ -375,12 +407,13 @@ export default function App() {
                           <th className="px-4 py-3">S (VA)</th>
                           <th className="px-4 py-3">P (W)</th>
                           <th className="px-4 py-3">Q (VAR)</th>
+                          <th className="px-4 py-3">Freq (Hz)</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/5">
                         {historicalData.length === 0 ? (
                           <tr>
-                            <td colSpan="8" className="text-center py-8 text-slate-400">
+                            <td colSpan="9" className="text-center py-8 text-slate-400">
                               No historical data available yet. Waiting for device...
                             </td>
                           </tr>
@@ -391,10 +424,11 @@ export default function App() {
                               <td className="px-4 py-2 font-mono text-xs">{row.time}</td>
                               <td className="px-4 py-2 font-mono text-sm text-cyan-300">{row.voltage.toFixed(1)}</td>
                               <td className="px-4 py-2 font-mono text-sm text-emerald-300">{row.current.toFixed(2)}</td>
-                              <td className="px-4 py-2 font-mono text-sm text-violet-300">{row.pf.toFixed(2)}</td>
+                              <td className="px-4 py-2 font-mono text-sm text-violet-300">{row.pf.toFixed(3)}</td>
                               <td className="px-4 py-2 font-mono text-sm text-sky-300">{row.apparent.toFixed(1)}</td>
                               <td className="px-4 py-2 font-mono text-sm text-orange-300">{row.power.toFixed(1)}</td>
                               <td className="px-4 py-2 font-mono text-sm text-pink-300">{row.reactive.toFixed(1)}</td>
+                              <td className="px-4 py-2 font-mono text-sm text-yellow-300">{row.frequency?.toFixed(1) || '50.0'}</td>
                             </tr>
                           ))
                         )}
