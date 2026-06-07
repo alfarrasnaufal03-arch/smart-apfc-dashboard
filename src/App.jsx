@@ -399,16 +399,16 @@ export default function App() {
                     <table className="w-full text-sm text-left text-slate-200">
                       <thead className="sticky top-0 bg-slate-900/90 backdrop-blur-sm text-xs uppercase font-semibold tracking-wider border-b border-white/20">
                         <tr>
-                          <th className="px-4 py-3">#</th>
-                          <th className="px-4 py-3">Time</th>
-                          <th className="px-4 py-3">V (V)</th>
-                          <th className="px-4 py-3">I (A)</th>
-                          <th className="px-4 py-3">cos φ</th>
-                          <th className="px-4 py-3">S (VA)</th>
-                          <th className="px-4 py-3">P (W)</th>
-                          <th className="px-4 py-3">Q (VAR)</th>
-                          <th className="px-4 py-3">Freq (Hz)</th>
-                        </tr>
+  <th className="px-4 py-3 text-center">#</th>
+  <th className="px-4 py-3 text-center">Time</th>
+  <th className="px-4 py-3 text-center">V (V)</th>
+  <th className="px-4 py-3 text-center">I (A)</th>
+  <th className="px-4 py-3 text-center">cos φ</th>
+  <th className="px-4 py-3 text-center">S (VA)</th>
+  <th className="px-4 py-3 text-center">P (W)</th>
+  <th className="px-4 py-3 text-center">Q (VAR)</th>
+  <th className="px-4 py-3 text-center">Freq (Hz)</th>
+</tr>
                       </thead>
                       <tbody className="divide-y divide-white/5">
                         {historicalData.length === 0 ? (
