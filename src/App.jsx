@@ -420,16 +420,16 @@ export default function App() {
                         ) : (
                           historicalData.map((row, idx) => (
                             <tr key={idx} className="hover:bg-white/5 transition-colors">
-                              <td className="px-4 py-2 font-mono text-xs text-slate-400">{idx + 1}</td>
-                              <td className="px-4 py-2 font-mono text-xs">{row.time}</td>
-                              <td className="px-4 py-2 font-mono text-sm text-cyan-300">{row.voltage.toFixed(1)}</td>
-                              <td className="px-4 py-2 font-mono text-sm text-emerald-300">{row.current.toFixed(2)}</td>
-                              <td className="px-4 py-2 font-mono text-sm text-violet-300">{row.pf.toFixed(3)}</td>
-                              <td className="px-4 py-2 font-mono text-sm text-sky-300">{row.apparent.toFixed(1)}</td>
-                              <td className="px-4 py-2 font-mono text-sm text-orange-300">{row.power.toFixed(1)}</td>
-                              <td className="px-4 py-2 font-mono text-sm text-pink-300">{row.reactive.toFixed(1)}</td>
-                              <td className="px-4 py-2 font-mono text-sm text-yellow-300">{row.frequency?.toFixed(1) || '50.0'}</td>
-                            </tr>
+                            <td className="px-4 py-2 font-mono text-xs text-slate-400 text-center">{idx + 1}</td>
+                            <td className="px-4 py-2 font-mono text-xs text-center">{row.time}</td>
+                            <td className="px-4 py-2 font-mono text-sm text-cyan-300 text-center">{row.voltage.toFixed(1)}</td>
+                            <td className="px-4 py-2 font-mono text-sm text-emerald-300 text-center">{row.current.toFixed(2)}</td>
+                            <td className="px-4 py-2 font-mono text-sm text-violet-300 text-center">{row.pf.toFixed(2)}</td>
+                            <td className="px-4 py-2 font-mono text-sm text-sky-300 text-center">{row.apparent.toFixed(0)}</td>
+                            <td className="px-4 py-2 font-mono text-sm text-orange-300 text-center">{row.power.toFixed(0)}</td>
+                            <td className="px-4 py-2 font-mono text-sm text-pink-300 text-center">{row.reactive.toFixed(0)}</td>
+                            <td className="px-4 py-2 font-mono text-sm text-yellow-300 text-center">{row.frequency?.toFixed(1) || '50.0'}</td>
+                          </tr>
                           ))
                         )}
                       </tbody>
